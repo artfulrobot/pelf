@@ -1,0 +1,30 @@
+/* Add any CSS rules for Angular module "pelf" */
+ul.pelf-browse__table {
+  padding: 0;
+  margin:0;
+}
+ul.pelf-browse__table li {
+  list-style: none;
+  padding:0;
+  margin:1rem 0;
+}
+article.pelf-browse__case-item {
+  background: white;
+  border-radius: 3px;
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+}
+.pelf-browse__case-name {
+  flex: 1 0 12rem;
+}
+.pelf-browse__case-value {
+  flex: 1 0 12rem;
+}
+article.pelf-browse__case-item h1 {
+}
+article.pelf-browse__case-item h1 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+

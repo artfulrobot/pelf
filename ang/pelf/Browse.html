@@ -1,0 +1,35 @@
+<div class="crm-container">
+  <h1 crm-page-title>{{ts('Pelf: browse')}}</h1>
+
+  <a href ng-click="reload()">Reload</a>
+
+  <!-- @todo filters -->
+  <div class="messages" ng-if="state == 'loading'" >
+    Please wait...
+  </div>
+  <div ng-if="state == 'loaded'" >
+
+    <ul class="pelf-browse__table">
+      <li ng-repeat="case in cases"
+          class="pelf-browse__case"
+          >
+          <article class="pelf-browse__case-item">
+            <div class="pelf-browse__case-name">
+              {{ case.stage_label }}
+              <h1>{{ case.subject }}</h1>
+              <div ng-repeat="client_id in case.clients">
+                {{ clients[client_id].display_name }}
+              </div>
+            </div>
+            <div class="pelf-browse__case-value">
+              <div>&pound;{{ case.funds_total }}</div><!-- @todo lookup local currency -->
+              <small>{{ case.worth_percent }}%</small>
+            </div>
+          </article>
+      </li>
+    </ul>
+
+  </div>
+
+
+</div>

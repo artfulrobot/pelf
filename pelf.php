@@ -168,3 +168,11 @@ function pelf_civicrm_navigationMenu(&$menu) {
   ));
   _pelf_civix_navigationMenu($menu);
 } // */
+/**
+ * Syntatic sugar.
+ *
+ * @return CRM_Pelf
+ */
+function pelf() {
+  return CRM_Pelf::singleton();
+}
