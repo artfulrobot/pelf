@@ -473,5 +473,11 @@ function _pelf_civix_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
 
 function _pelf_civix_civicrm_entityTypes(&$entityTypes) {
   $entityTypes = array_merge($entityTypes, array (
+    'CRM_Pelf_DAO_PelfFundsAllocation' => 
+    array (
+      'name' => 'PelfFundsAllocation',
+      'class' => 'CRM_Pelf_DAO_PelfFundsAllocation',
+      'table' => 'pelf_funds_allocation',
+    ),
   ));
 }

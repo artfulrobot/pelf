@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="iso-8859-1" ?>
+
+<table>
+  <base>CRM/Pelf</base>
+  <class>PelfFundsAllocation</class>
+  <name>civicrm_pelf_funds_allocation</name>
+  <comment>Describes financial year and project breakdown for a Pelf Venture</comment>
+  <log>true</log>
+
+  <field>
+    <name>id</name>
+    <type>int unsigned</type>
+    <required>true</required>
+    <comment>Unique PelfFundsAllocation ID</comment>
+  </field>
+  <primaryKey>
+    <name>id</name>
+    <autoincrement>true</autoincrement>
+  </primaryKey>
+
+  <field>
+    <name>case_id</name>
+    <type>int unsigned</type>
+    <comment>FK to Case</comment>
+  </field>
+  <foreignKey>
+    <name>case_id</name>
+    <table>civicrm_case</table>
+    <key>id</key>
+    <onDelete>CASCADE</onDelete>
+  </foreignKey>
+
+  <field>
+    <name>amount</name>
+    <uniqueName>pelf_allocation_amount</uniqueName>
+    <type>decimal</type>
+    <comment>Amount in local currency</comment>
+  </field>
+
+  <field>
+    <name>project</name>
+    <uniqueName>pelf_project</uniqueName>
+    <type>int unsigned</type>
+    <comment>OptionValue for project</comment>
+  </field>
+
+  <field>
+    <name>fy_start</name>
+    <uniqueName>pelf_fy_start</uniqueName>
+    <type>date</type>
+    <comment>Date of start of the financial year to which this ammount is allocated.</comment>
+  </field>
+</table>
