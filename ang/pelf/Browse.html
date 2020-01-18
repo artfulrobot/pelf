@@ -9,13 +9,42 @@
   </div>
   <div ng-if="state == 'loaded'" >
 
+    <div class="pelf-browse__filters">
+      <form crm-ui-id-scope name="pelf_filters">
+        <label for="pelf-sort">Sort by</label>
+        <select id="pelf-sort" ng-model="filters.sort" >
+          <option value="Status">Status</option>
+          <option value="Worth">Worth</option>
+          <option value="Adjusted Worth">Adjusted Worth</option>
+        </select>
+
+        <!-- multi select -->
+        <label crm-ui-for="filters.projects">Projects</label>
+        <input
+          ng-list
+          crm-ui-id="filters.projects"
+          ng-model="filters.projects"
+          crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: projectsFilterOptions }"
+          multiple
+          name="projects_filter"
+          class=""
+          placeholder="{{ts('Filter by project')}}"
+          >
+
+      </form>
+    </div>
+
     <ul class="pelf-browse__table">
-      <li ng-repeat="case in cases"
-          class="pelf-browse__case"
+      <li ng-repeat="case in sortedCases"
+          class="pelf-browse__case {{ case_statuses[case.status_id].grouping }}"
+          style="border-left: solid 4px {{case_statuses[case.status_id].color}}"
           >
           <article class="pelf-browse__case-item">
+            <div class="pelf-browse__case-meta">
+              {{ case_statuses[case.status_id].label }}
+              <!-- todo: priority -->
+            </div>
             <div class="pelf-browse__case-name">
-              {{ case.stage_label }}
               <h1>{{ case.subject }}</h1>
               <div ng-repeat="client_id in case.clients">
                 {{ clients[client_id].display_name }}
@@ -24,6 +53,21 @@
             <div class="pelf-browse__case-value">
               <div>&pound;{{ case.funds_total }}</div><!-- @todo lookup local currency -->
               <small>{{ case.worth_percent }}%</small>
+            </div>
+            <div class="pelf-browse__case-allocations">
+              <table>
+                <thead>
+                  <tr><th>Project</th>
+                    <th ng-repeat="fy in financial_years">{{fy}}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr ng-repeat="project_id in case.projects">
+                    <td>{{projects[project_id].label}}</td>
+                    <td ng-repeat="fy in financial_years">{{ case.funds[fy][project_id] }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </article>
       </li>

@@ -48,10 +48,10 @@ class CRM_Pelf {
     $params = [];
 
     // Fetch cases
-    $sql = "SELECT cs.id, cs.subject, v.worth_percent, stage.label stage_label
+    $sql = "SELECT cs.id, cs.subject, v.worth_percent, status_id, stage.label status_label
       FROM civicrm_case cs
       INNER JOIN civicrm_pelf_venture_details v ON cs.id = v.entity_id
-      INNER JOIN civicrm_option_value stage ON cs.stage_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
+      INNER JOIN civicrm_option_value stage ON cs.status_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
       WHERE case_type_id = $this->pelf_venture_case_id";
     $dao = CRM_Core_DAO::executeQuery($sql);
     $cases = [];
@@ -60,6 +60,7 @@ class CRM_Pelf {
       $cases[$id] = $dao->toArray() + ['funds_total' => 0];
       // Ensure worth_percent is a float.
       $cases[$id]['worth_percent'] = (float) $dao->worth_percent;
+      // $cases[$id]['projects'] = [];
     }
     $case_ids_sql = implode(',', array_keys($cases));
 
@@ -84,27 +85,59 @@ class CRM_Pelf {
     }
 
     // Fetch Allocations for these cases.
+    // Helpful to know which projects are encountered for each case.
     $sql = "SELECT * FROM civicrm_pelf_funds_allocation WHERE case_id IN ($case_ids_sql) ORDER BY fy_start";
     $dao = CRM_Core_DAO::executeQuery($sql);
-    $financial_years = []; // @Todo
-    $unique_projects = [];
+    $financial_years = [];
+    $projects_by_case = [];
+
+    // Turn flat list into fy.proj = value pivot
     while ($dao->fetch()) {
-      $cases[$dao->case_id]['funds'][] = $dao->toArray();
+      $_ = $dao->toArray();
+
+      // Track projects
+      $projects_by_case[(int) $dao->case_id][(int) $dao->project] = NULL;
+
+      // Keep track of financial years encountered and simplify
+      $year = substr($dao->fy_start, 0, 4);
+      if (substr($dao->fy_start, 6,5) !== '01-01') {
+        // Unless year start is 1 Jan, show FY as 2020-2021
+        $year .= '-' . ($year + 1);
+      }
+      $financial_years[$year] = NULL;
+      $_['fy'] = $year;
+
+      $cases[$dao->case_id]['funds'][$year][$dao->project] = $dao->amount;
       $cases[$dao->case_id]['funds_total'] += $dao->amount;
-      $unique_projects[(int) $dao->project] = NULL;
+      //$unique_projects[(int) $dao->project] = NULL;
+    }
+    // Merge in projects_by_case
+    foreach ($projects_by_case as $case_id => $projects) {
+      $projects = array_keys($projects);
+      sort($projects); // @todo by alphabet
+      $cases[$case_id]['projects'] = $projects;
     }
 
-    // Fetch all projects.
+    // Fetch all projects. @todo is active
     $projects = Civi\Api4\OptionValue::get()
-      ->setSelect(['value', 'label'])
+      ->setSelect(['value', 'label', 'color', 'grouping'])
       ->addWhere('option_group.name', '=', 'pelf_project')
       ->execute()
       ->indexBy('value');
 
+    // Fetch all case statuses. @todo is active
+    $case_statuses = Civi\Api4\OptionValue::get()
+      ->setSelect(['value', 'label', 'color', 'grouping'])
+      ->addWhere('option_group.name', '=', 'case_status')
+      ->execute()
+      ->indexBy('value');
+
     return [
-      'clients' => $clients,
-      'cases'   => $cases,
-      'projects' => $projects,
+      'clients'         => $clients,
+      'cases'           => $cases,
+      'case_statuses'   => $case_statuses,
+      'projects'        => $projects,
+      'financial_years' => array_keys($financial_years),
     ];
   }
 }

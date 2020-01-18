@@ -30,15 +30,81 @@
     var hs = $scope.hs = crmUiHelp({file: 'CRM/pelf/Browse'}); // See: templates/CRM/pelf/Browse.hlp
 
     $scope.state = 'loading';
+    $scope.sortedCases = [];
+    $scope.cases = {};
     $scope.filters = {
+      sort: 'Status',
+      projects: []
     };
+    $scope.projectsFilterOptions = {results:[]};
+    $scope.$watch('filters', applySortAndFilter, true);
+
+    function applySortAndFilter() {
+      $scope.sortedCases = [];
+      if (!$scope.cases) {
+        return;
+      }
+      for (const key in $scope.cases) {
+        if (!$scope.cases.hasOwnProperty(key)) {
+          continue;
+        }
+        var item = $scope.cases[key];
+
+        // Determine if this case matches our filters.
+
+        // Project match?
+        if ($scope.filters.projects.length > 0) {
+          var anyMatch = false;
+          var selectedProjects = $scope.filters.projects;
+          for (var i=item.projects.length-1;i>-1;i--) {
+            console.log("checking ", item.projects[i].toString(), 'for match in ',  selectedProjects);
+            if (selectedProjects.indexOf(item.projects[i].toString()) > -1) {
+              anyMatch = true;
+              break;
+            }
+          }
+          if (!anyMatch) {
+            continue;
+          }
+        }
+
+        $scope.sortedCases.push($scope.cases[key]);
+      }
+
+      if ($scope.filters.sort == 'Status') {
+        $scope.sortedCases.sort((a, b) => {
+          return b.status_id - a.status_id;
+        });
+      }
+      else if ($scope.filters.sort == 'Worth') {
+        $scope.sortedCases.sort((a, b) => {
+          return b.funds_total - a.funds_total;
+        });
+      }
+      else if ($scope.filters.sort == 'Worth Adjusted') {
+        $scope.sortedCases.sort((a, b) => {
+          return a.funds_total * a.worth_percent / 100 - b.funds_total * b.worth_percent / 100;
+        });
+      }
+    }
 
     function updateData(r) {
-      console.log("updateData", r);
       r = r.values;
+      console.log("updateData", r);
       $scope.cases = r.cases;
       $scope.clients = r.clients;
       $scope.state = 'loaded';
+      $scope.financial_years = r.financial_years;
+      $scope.projects = r.projects;
+      $scope.projectsFilterOptions.results = [];
+      for (const key in r.projects) {
+        if (r.projects.hasOwnProperty(key)) {
+          $scope.projectsFilterOptions.results.push({id: (r.projects[key].value), text: r.projects[key].label });
+        }
+      }
+      $scope.case_statuses = r.case_statuses;
+
+      applySortAndFilter();
     }
     function handleFail(r) {
       console.log("handleFail", r);
@@ -53,19 +119,6 @@
     $scope.reload = reload;
 
     reload();
-
-    $scope.save = function save() {
-      return crmStatus(
-        // Status messages. For defaults, just use "{}"
-        {start: ts('Saving...'), success: ts('Saved')},
-        // The save action. Note that crmApi() returns a promise.
-        crmApi('Contact', 'create', {
-          id: myContact.id,
-          first_name: myContact.first_name,
-          last_name: myContact.last_name
-        })
-      );
-    };
   });
 
 })(angular, CRM.$, CRM._);

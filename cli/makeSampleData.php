@@ -121,6 +121,7 @@ foreach ($data['cases'] as &$case) {
       civicrm_api3('PelfFundsAllocation', 'create', [
         'case_id' => $id,
         'amount' => $allocation['amount'],
+        'fy_start' => $allocation['fy'],
         'project' => $data['projects'][$allocation['project']],
       ]);
     }

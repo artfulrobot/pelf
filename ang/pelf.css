@@ -15,11 +15,17 @@ article.pelf-browse__case-item {
   display: flex;
   flex-wrap: wrap;
 }
+.pelf-browse__case-meta {
+  flex: 1 0 7rem;
+}
 .pelf-browse__case-name {
-  flex: 1 0 12rem;
+  flex: 10 0 12rem;
 }
 .pelf-browse__case-value {
-  flex: 1 0 12rem;
+  flex: 1 0 6rem;
+}
+.pelf-browse__case-allocations {
+  flex: 10 0 12rem;
 }
 article.pelf-browse__case-item h1 {
 }
@@ -27,4 +33,15 @@ article.pelf-browse__case-item h1 {
   margin: 0;
   font-size: 1.2rem;
 }
-
+#crm-container .pelf-browse__case-allocations table {
+  margin:0;
+  border:none;
+  font-size:0.75rem;
+}
+#crm-container .pelf-browse__case-allocations table td,
+#crm-container .pelf-browse__case-allocations table th
+{
+  padding:0.25rem 0.5rem;
+  border-style: none;
+  text-align: right;
+}
