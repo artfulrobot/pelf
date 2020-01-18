@@ -35,10 +35,12 @@
     $scope.filters = {
       sort: 'Status',
       projects: [],
+      status: [],
       years: []
     };
     $scope.projectsFilterOptions = {results:[]};
     $scope.yearsFilterOptions = {results:[]};
+    $scope.statusFilterOptions = {results:[]};
     $scope.$watch('filters', applySortAndFilter, true);
 
     function applySortAndFilter() {
@@ -55,6 +57,12 @@
 
         // Determine if this case matches our filters.
 
+        // Status match?
+        if ($scope.filters.status.length > 0) {
+          if ($scope.filters.status.indexOf(item.status_id.toString()) == -1) {
+            continue;
+          }
+        }
         // Project match?
         if ($scope.filters.projects.length > 0) {
           if (!$scope.filters.projects.some(proj => item.projects.indexOf(parseInt(proj))>-1 )) {
@@ -108,6 +116,7 @@
       $scope.yearsFilterOptions.results = r.financial_years.map(y => ({id: y, text: y}));
 
       $scope.case_statuses = r.case_statuses;
+      $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
 
       applySortAndFilter();
     }

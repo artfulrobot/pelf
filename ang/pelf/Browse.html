@@ -18,6 +18,16 @@
           <option value="Adjusted Worth">Adjusted Worth</option>
         </select>
 
+        <label crm-ui-for="filters_status">Status</label>
+        <input
+          ng-list
+          crm-ui-id="filters_status"
+          crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: statusFilterOptions }"
+          ng-model="filters.status"
+          name="status_filter"
+          />
+
+
         <label crm-ui-for="filters_projects">Projects</label>
         <input
           ng-list
