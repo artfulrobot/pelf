@@ -9,6 +9,7 @@
   </div>
   <div ng-if="state == 'loaded'" >
 
+    <!-- ====================================== Form ====================================== -->
     <form crm-ui-id-scope name="pelf_filters">
       <div class="pelf-browse__filters">
         <div class="pelf-browse__filter">
@@ -62,7 +63,36 @@
         </div>
       </div>
     </form>
+    <!-- ====================================== Summary ====================================== -->
 
+    <div>
+      <!-- by project -->
+      <table>
+        <thead> <tr> <th>Project</th> <th>Amount</th> </tr> </thead>
+        <tbody>
+          <tr ng-repeat="row in projects" >
+            <td>{{row.label}}</td>
+            <td>{{pivotProjects[row.value][filters.adjusted ? 'adjusted' : 'total']}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- by status -->
+      <table>
+        <thead> <tr> <th>Status</th> <th>Amount</th> </tr> </thead>
+        <tbody>
+          <tr ng-repeat="row in case_statuses" >
+            <td style="border-left: solid 4px {{case_statuses[row.value].color}}">
+              {{row.label}}
+            </td>
+            <td>{{pivotStatus[row.value][filters.adjusted ? 'adjusted' : 'total']}}</td>
+          </tr>
+        </tbody>
+      </table>
+      <!-- by year -->
+    </div>
+
+
+    <!-- ====================================== Listings ====================================== -->
     <ul class="pelf-browse__table">
       <li ng-repeat="case in sortedCases"
           class="pelf-browse__case {{ case_statuses[case.status_id].grouping }}"

@@ -42,10 +42,14 @@
     $scope.projectsFilterOptions = {results:[]};
     $scope.yearsFilterOptions = {results:[]};
     $scope.statusFilterOptions = {results:[]};
+    $scope.projectPivot = [];
+    $scope.projects = [];
     $scope.$watch('filters', applySortAndFilter, true);
 
     function applySortAndFilter() {
       $scope.sortedCases = [];
+      // Recalculate pivots
+      const pivots = {};
       if (!$scope.cases) {
         return;
       }
@@ -55,6 +59,8 @@
         }
         var item = $scope.cases[key];
         var anyMatch = false;
+
+        // Loop funds.
 
         // Determine if this case matches our filters.
 
@@ -100,12 +106,16 @@
 
     $scope.pelfMoney = function(amount, item) {
       if (!amount) return '';
+      amount = adjustAmount(amount, item);
+      amount = (Math.round(amount/100) * 100).toString();
+      return amount;
+    };
+    function adjustAmount(amount, item) {
+      if (!amount) return '';
       if ($scope.filters.adjusted) {
         amount *= item.worth_percent / 100;
       }
-      // Loose the pennies, units, tens.
-      amount = (Math.round(amount/100) * 100).toString();
-      return amount;
+      return Math.round(amount);
     };
 
     function updateData(r) {
@@ -116,6 +126,8 @@
       $scope.state = 'loaded';
 
       $scope.projects = r.projects;
+      $scope.pivotStatus = r.pivot_status;
+      $scope.pivotProjects = r.pivot_projects;
       $scope.projectsFilterOptions.results = [];
       for (const key in r.projects) {
         if (r.projects.hasOwnProperty(key)) {

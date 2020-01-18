@@ -90,13 +90,30 @@ class CRM_Pelf {
     $dao = CRM_Core_DAO::executeQuery($sql);
     $financial_years = [];
     $projects_by_case = [];
+    $summary_pivot_project = [];
+    $summary_pivot_status = [];
 
-    // Turn flat list into fy.proj = value pivot
+    // Turn flat list into [fy][proj] = total pivot
     while ($dao->fetch()) {
       $_ = $dao->toArray();
+      $case = $cases[$dao->case_id];
 
       // Track projects
       $projects_by_case[(int) $dao->case_id][(int) $dao->project] = NULL;
+
+      // Project pivot calcs.
+      if (!isset($summary_pivot_project[$dao->project])) {
+        $summary_pivot_project[$dao->project] = ['total' => 0, 'adjusted' => 0];
+      }
+      $summary_pivot_project[$dao->project]['total'] += $dao->amount;
+      $summary_pivot_project[$dao->project]['adjusted'] += $dao->amount * $case['worth_percent']/100;
+
+      // Status pivot calcs.
+      if (!isset($summary_pivot_status[$case['status_id']])) {
+        $summary_pivot_status[$case['status_id']] = ['total' => 0, 'adjusted' => 0];
+      }
+      $summary_pivot_status[$case['status_id']]['total'] += $dao->amount;
+      $summary_pivot_status[$case['status_id']]['adjusted'] += $dao->amount * $case['worth_percent']/100;
 
       // Keep track of financial years encountered and simplify
       $year = substr($dao->fy_start, 0, 4);
@@ -138,6 +155,8 @@ class CRM_Pelf {
       'case_statuses'   => $case_statuses,
       'projects'        => $projects,
       'financial_years' => array_keys($financial_years),
+      'pivot_projects'  => $summary_pivot_project,
+      'pivot_status'    => $summary_pivot_status,
     ];
   }
 }
