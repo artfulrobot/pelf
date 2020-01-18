@@ -45,3 +45,13 @@ article.pelf-browse__case-item h1 {
   border-style: none;
   text-align: right;
 }
+.pelf-browse__filters {
+  display: flex;
+  flex-wrap: wrap;
+  margin-left: -0.5rem;
+  margin-right: -0.5rem;
+}
+.pelf-browse__filter {
+  flex: 1 0 auto;
+  padding: 0.5rem;
+}

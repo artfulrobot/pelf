@@ -9,44 +9,59 @@
   </div>
   <div ng-if="state == 'loaded'" >
 
-    <div class="pelf-browse__filters">
-      <form crm-ui-id-scope name="pelf_filters">
-        <label for="pelf-sort">Sort by</label>
-        <select id="pelf-sort" ng-model="filters.sort" >
-          <option value="Status">Status</option>
-          <option value="Worth">Worth</option>
-          <option value="Adjusted Worth">Adjusted Worth</option>
-        </select>
-
-        <label crm-ui-for="filters_status">Status</label>
-        <input
-          ng-list
-          crm-ui-id="filters_status"
-          crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: statusFilterOptions }"
-          ng-model="filters.status"
-          name="status_filter"
-          />
+    <form crm-ui-id-scope name="pelf_filters">
+      <div class="pelf-browse__filters">
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_status">Status</label>
+          <input
+            ng-list
+            crm-ui-id="filters_status"
+            crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: statusFilterOptions }"
+            ng-model="filters.status"
+            name="status_filter"
+            />
+        </div>
 
 
-        <label crm-ui-for="filters_projects">Projects</label>
-        <input
-          ng-list
-          crm-ui-id="filters_projects"
-          crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: projectsFilterOptions }"
-          ng-model="filters.projects"
-          name="projects_filter"
-          />
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_projects">Projects</label>
+          <input
+            ng-list
+            crm-ui-id="filters_projects"
+            crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: projectsFilterOptions }"
+            ng-model="filters.projects"
+            name="projects_filter"
+            />
+        </div>
 
-        <label crm-ui-for="filters_fys">Years</label>
-        <input
-          ng-list
-          crm-ui-id="filters_fys"
-          crm-ui-select="{allowClear:true, width: '9rem', multiple: true, data: yearsFilterOptions }"
-          ng-model="filters.years"
-          name="projects_fys"
-          />
-      </form>
-    </div>
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_fys">Years</label>
+          <input
+            ng-list
+            crm-ui-id="filters_fys"
+            crm-ui-select="{allowClear:true, width: '9rem', multiple: true, data: yearsFilterOptions }"
+            ng-model="filters.years"
+            name="projects_fys"
+            />
+        </div>
+
+        <div class="pelf-browse__filter">
+          <label for="pelf-sort">Sort by</label>
+          <select id="pelf-sort" ng-model="filters.sort" >
+            <option value="Status">Status</option>
+            <option value="Worth">Worth</option>
+            <option value="Adjusted Worth">Adjusted Worth</option>
+          </select>
+        </div>
+
+        <div class="pelf-browse__filter">
+          <input crm-ui-id="filters_adjusted"
+                 type="checkbox"
+                 ng-model="filters.adjusted" />
+          <label crm-ui-for="filters_adjusted">Show adjusted worth</label>
+        </div>
+      </div>
+    </form>
 
     <ul class="pelf-browse__table">
       <li ng-repeat="case in sortedCases"
@@ -65,7 +80,7 @@
               </div>
             </div>
             <div class="pelf-browse__case-value">
-              <div>&pound;{{ case.funds_total }}</div><!-- @todo lookup local currency -->
+              <div>&pound;{{ pelfMoney(case.funds_total, case) }}</div><!-- @todo lookup local currency -->
               <small>{{ case.worth_percent }}%</small>
             </div>
             <div class="pelf-browse__case-allocations">
@@ -78,7 +93,7 @@
                 <tbody>
                   <tr ng-repeat="project_id in case.projects">
                     <td>{{projects[project_id].label}}</td>
-                    <td ng-repeat="fy in financial_years">{{ case.funds[fy][project_id] }}</td>
+                    <td ng-repeat="fy in financial_years">{{ pelfMoney(case.funds[fy][project_id], case) }}</td>
                   </tr>
                 </tbody>
               </table>

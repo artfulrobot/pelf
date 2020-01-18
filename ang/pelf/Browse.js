@@ -36,7 +36,8 @@
       sort: 'Status',
       projects: [],
       status: [],
-      years: []
+      years: [],
+      adjusted: false
     };
     $scope.projectsFilterOptions = {results:[]};
     $scope.yearsFilterOptions = {results:[]};
@@ -96,6 +97,16 @@
         });
       }
     }
+
+    $scope.pelfMoney = function(amount, item) {
+      if (!amount) return '';
+      if ($scope.filters.adjusted) {
+        amount *= item.worth_percent / 100;
+      }
+      // Loose the pennies, units, tens.
+      amount = (Math.round(amount/100) * 100).toString();
+      return amount;
+    };
 
     function updateData(r) {
       r = r.values;
