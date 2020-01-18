@@ -34,9 +34,11 @@
     $scope.cases = {};
     $scope.filters = {
       sort: 'Status',
-      projects: []
+      projects: [],
+      years: []
     };
     $scope.projectsFilterOptions = {results:[]};
+    $scope.yearsFilterOptions = {results:[]};
     $scope.$watch('filters', applySortAndFilter, true);
 
     function applySortAndFilter() {
@@ -49,21 +51,20 @@
           continue;
         }
         var item = $scope.cases[key];
+        var anyMatch = false;
 
         // Determine if this case matches our filters.
 
         // Project match?
         if ($scope.filters.projects.length > 0) {
-          var anyMatch = false;
-          var selectedProjects = $scope.filters.projects;
-          for (var i=item.projects.length-1;i>-1;i--) {
-            console.log("checking ", item.projects[i].toString(), 'for match in ',  selectedProjects);
-            if (selectedProjects.indexOf(item.projects[i].toString()) > -1) {
-              anyMatch = true;
-              break;
-            }
+          if (!$scope.filters.projects.some(proj => item.projects.indexOf(parseInt(proj))>-1 )) {
+            continue;
           }
-          if (!anyMatch) {
+        }
+
+        // Year match?
+        if ($scope.filters.years.length > 0) {
+          if (!$scope.filters.years.some((year) => year in item.funds)) {
             continue;
           }
         }
@@ -94,7 +95,7 @@
       $scope.cases = r.cases;
       $scope.clients = r.clients;
       $scope.state = 'loaded';
-      $scope.financial_years = r.financial_years;
+
       $scope.projects = r.projects;
       $scope.projectsFilterOptions.results = [];
       for (const key in r.projects) {
@@ -102,6 +103,10 @@
           $scope.projectsFilterOptions.results.push({id: (r.projects[key].value), text: r.projects[key].label });
         }
       }
+
+      $scope.financial_years = r.financial_years;
+      $scope.yearsFilterOptions.results = r.financial_years.map(y => ({id: y, text: y}));
+
       $scope.case_statuses = r.case_statuses;
 
       applySortAndFilter();

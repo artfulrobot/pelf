@@ -18,19 +18,23 @@
           <option value="Adjusted Worth">Adjusted Worth</option>
         </select>
 
-        <!-- multi select -->
-        <label crm-ui-for="filters.projects">Projects</label>
+        <label crm-ui-for="filters_projects">Projects</label>
         <input
           ng-list
-          crm-ui-id="filters.projects"
-          ng-model="filters.projects"
+          crm-ui-id="filters_projects"
           crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: projectsFilterOptions }"
-          multiple
+          ng-model="filters.projects"
           name="projects_filter"
-          class=""
-          placeholder="{{ts('Filter by project')}}"
-          >
+          />
 
+        <label crm-ui-for="filters_fys">Years</label>
+        <input
+          ng-list
+          crm-ui-id="filters_fys"
+          crm-ui-select="{allowClear:true, width: '9rem', multiple: true, data: yearsFilterOptions }"
+          ng-model="filters.years"
+          name="projects_fys"
+          />
       </form>
     </div>
 
