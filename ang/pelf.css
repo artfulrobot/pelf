@@ -74,7 +74,8 @@ td.pelf-financial__no-padding
   top: 0;
   height: 100%;
   width: 0;
-  background-color: #cacaca;
+  background-color: #aecde4;
+  transition: width 0.3s;
 }
 .pelf-bg-barchart__text {
   line-height: 2rem;

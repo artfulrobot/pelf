@@ -66,22 +66,24 @@
     <!-- ====================================== Summary ====================================== -->
 
     <div class="pelf-summary-tables">
-
       <div class="pelf-summary-tables__table">
         <!-- by project -->
         <table class="pelf-financial">
-          <thead> <tr> <th>Project</th> <th>Amount</th> </tr> </thead>
+          <thead> <tr> <th>Project</th>
+              <th ng-repeat="fy in financial_years">{{fy}}</th>
+            </tr> </thead>
           <tbody>
             <tr ng-repeat="row in projects" >
-              <td>{{row.label}}</td>
-              <td class="pelf-financial__no-padding">
+              <td class="pelf-financial__no-padding"><div class="pelf-status-label">{{row.label}}</div></td>
+              <td ng-repeat="fy in financial_years"
+                class="pelf-financial__no-padding">
                 <div class="pelf-bg-barchart" >
                   <div class="pelf-bg-barchart__bar"
                        ng-if="totals[filters.adjusted ? 'adjusted' : 'total'] != 0"
-                       ng-style="{ width: pivotProjects[row.value][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
+                       ng-style="{ width: pivotProjects[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
                   </div>
                   <div class="pelf-bg-barchart__text pelf-money" >
-                    {{pivotProjects[row.value][filters.adjusted ? 'adjusted' : 'total']}}
+                    {{pivotProjects[row.value][fy][filters.adjusted ? 'adjusted' : 'total']}}
                   </div>
                 </div>
               </td>
@@ -92,21 +94,24 @@
       <div class="pelf-summary-tables__table">
         <!-- by status -->
         <table class="pelf-financial">
-          <thead> <tr> <th>Status</th> <th>Amount</th> </tr> </thead>
+          <thead> <tr> <th>Status</th>
+              <th ng-repeat="fy in financial_years">{{fy}}</th>
+          </tr> </thead>
           <tbody>
             <tr ng-repeat="row in sorted_case_statuses" >
               <td class="pelf-financial__no-padding">
                 <div class="pelf-status-label" style="border-left: solid 4px {{row.color}}">
                 {{row.label}}
               </td>
-              <td class="pelf-financial__no-padding">
+              <td ng-repeat="fy in financial_years"
+                  class="pelf-financial__no-padding">
                 <div class="pelf-bg-barchart" >
                   <div class="pelf-bg-barchart__bar"
                        ng-if="totals[filters.adjusted ? 'adjusted' : 'total'] != 0"
-                       ng-style="{ width: pivotStatus[row.value][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
+                       ng-style="{ width: pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
                   </div>
                   <div class="pelf-bg-barchart__text pelf-money" >
-                    {{pivotStatus[row.value][filters.adjusted ? 'adjusted' : 'total']}}
+                    {{pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total']}}
                   </div>
                 </div>
               </td>

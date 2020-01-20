@@ -145,7 +145,8 @@ class CRM_Pelf {
 
     $sql = '';
     $params = [];
-    // Limit by case type?
+
+    // Limit by a particular case type?
     $allowed_case_types = array_keys($this->caseTypes);
     if ($filters['case_type_id']) {
       $case_type_id = (int) $filters['case_type_id'];
@@ -164,13 +165,16 @@ class CRM_Pelf {
       WHERE case_type_id IN ($allowed_case_types)";
     $dao = CRM_Core_DAO::executeQuery($sql);
     $cases = [];
+    $used_case_statuses = [];
     while ($dao->fetch()) {
       $id = (int) $dao->id;
       $cases[$id] = $dao->toArray() + ['funds_total' => 0];
       // Ensure worth_percent is a float.
       $cases[$id]['worth_percent'] = (float) $dao->worth_percent;
       // $cases[$id]['projects'] = [];
+      $used_case_statuses[$dao->status_id] = TRUE;
     }
+
     $case_ids_sql = implode(',', array_keys($cases));
 
     // Fetch clients
@@ -209,6 +213,16 @@ class CRM_Pelf {
         $_ = $dao->toArray();
         $case = $cases[$dao->case_id];
 
+        // Keep track of financial years encountered and simplify
+        $year = substr($dao->fy_start, 0, 4);
+        if (substr($dao->fy_start, 6,5) !== '01-01') {
+          // Unless year start is 1 Jan, show FY as 2020-2021
+          $year .= '-' . ($year + 1);
+        }
+        $financial_years[$year] = NULL;
+        $_['fy'] = $year;
+        $cases[$dao->case_id]['funds'][$year][$dao->project] = $dao->amount;
+
         // Track projects
         $projects_by_case[(int) $dao->case_id][(int) $dao->project] = NULL;
 
@@ -220,26 +234,16 @@ class CRM_Pelf {
         if (!isset($summary_pivot_project[$dao->project])) {
           $summary_pivot_project[$dao->project] = ['total' => 0, 'adjusted' => 0];
         }
-        $summary_pivot_project[$dao->project]['total'] += $dao->amount;
-        $summary_pivot_project[$dao->project]['adjusted'] += $dao->amount * $case['worth_percent']/100;
+        $summary_pivot_project[$dao->project][$year]['total'] += $dao->amount;
+        $summary_pivot_project[$dao->project][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
 
         // Status pivot calcs.
         if (!isset($summary_pivot_status[$case['status_id']])) {
           $summary_pivot_status[$case['status_id']] = ['total' => 0, 'adjusted' => 0];
         }
-        $summary_pivot_status[$case['status_id']]['total'] += $dao->amount;
-        $summary_pivot_status[$case['status_id']]['adjusted'] += $dao->amount * $case['worth_percent']/100;
+        $summary_pivot_status[$case['status_id']][$year]['total'] += $dao->amount;
+        $summary_pivot_status[$case['status_id']][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
 
-        // Keep track of financial years encountered and simplify
-        $year = substr($dao->fy_start, 0, 4);
-        if (substr($dao->fy_start, 6,5) !== '01-01') {
-          // Unless year start is 1 Jan, show FY as 2020-2021
-          $year .= '-' . ($year + 1);
-        }
-        $financial_years[$year] = NULL;
-        $_['fy'] = $year;
-
-        $cases[$dao->case_id]['funds'][$year][$dao->project] = $dao->amount;
         $cases[$dao->case_id]['funds_total'] += $dao->amount;
         //$unique_projects[(int) $dao->project] = NULL;
       }
@@ -262,6 +266,7 @@ class CRM_Pelf {
     $case_statuses = Civi\Api4\OptionValue::get()
       ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
       ->addWhere('option_group.name', '=', 'case_status')
+      ->addWhere('value', 'IN', array_keys($used_case_statuses))
       ->addWhere('is_active', '=', '1')
       ->execute()
       ->indexBy('value');
