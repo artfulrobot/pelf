@@ -2,8 +2,94 @@
 if (php_sapi_name() !== 'cli') {
   exit;
 }
-
 try {
+
+  // {{{
+    $tpls = <<<JSON
+{
+  "name": "pelf_grant",
+  "title": "Grant application",
+  "statuses": [
+    {
+      "name": "pelf_research",
+      "label": "Research",
+      "description": "Looking into this possible prospect.",
+      "color": "#C1EECB",
+      "phase": "prospect",
+      "grouping": "Opened",
+      "weight": 10
+    },
+    {
+      "name": "pelf_writing",
+      "label": "Writing bid",
+      "description": "Preparing to submit bid",
+      "color": "#A3E2B0",
+      "phase": "prospect",
+      "grouping": "Opened",
+      "weight": 30
+    },
+    {
+      "name": "pelf_submitted",
+      "label": "Submitted bid",
+      "description": "Bid submitted, waiting to hear",
+      "color": "#85D596",
+      "phase": "prospect",
+      "grouping": "Opened",
+      "weight": 40
+    },
+    {
+      "name": "pelf_negotiate",
+      "label": "Negotiating",
+      "description": "Near completion, discussing terms/contract etc.",
+      "color": "#85D596",
+      "phase": "prospect",
+      "grouping": "Opened",
+      "weight": 50
+    },
+    {
+      "name": "pelf_contract",
+      "label": "Contract",
+      "description": "Success: Contract agreed",
+      "color": "#4bbbdd",
+      "phase": "live",
+      "grouping": "Opened",
+      "weight": 80
+    },
+    {
+      "name": "pelf_dropped",
+      "label": "Dropped",
+      "description": "We decided not to proceed. e.g. research revealed unsuitable",
+      "color": "#888888",
+      "phase": "dropped",
+      "grouping": "Closed",
+      "weight": 90
+    },
+    {
+      "name": "pelf_failed",
+      "label": "Failed",
+      "description": "Bid was declined",
+      "color": "#997777",
+      "phase": "failed",
+      "grouping": "Closed",
+      "weight": 100
+    },
+    {
+      "name": "pelf_completed",
+      "label": "Completed",
+      "description": "Contract has been delivered and is now all finished.",
+      "color": "#7F9977",
+      "phase": "complete",
+      "grouping": "Closed",
+      "weight": 110
+    }
+  ]
+}
+JSON;
+    //}}}
+
+    // Create Case type, statuses, config.
+    pelf()->createCaseTypeTemplate(json_decode($tpls, TRUE));
+
 $data = [
   'funders' => [
     'funder_a' => [
@@ -27,8 +113,7 @@ $data = [
       'subject'       => 'Climate Emergency national action',
       'client'        => 'funder_a',
       'coordinator'   => 'staff_a',
-      // case_type_id => 'pelf_venture'
-      'status_id'     => 'Open', // this is a default, we could use our own..
+      'status_id'     => 'pelf_writing',
       'worth_percent' => '50',
       'allocations' => [
         ['amount' => 1000, 'fy' => '2020-04-06', 'project' => 'unallocated'],
@@ -38,8 +123,7 @@ $data = [
       'subject'       => 'Not too late to go green',
       'client'        => 'funder_b',
       'coordinator'   => 'staff_b',
-      // case_type_id => 'pelf_venture'
-      'status_id'     => 'Open', // this is a default, we could use our own..
+      'status_id'     => 'pelf_submitted',
       'worth_percent' => '10',
       'allocations' => [
         ['amount' => 3000, 'fy' => '2019-04-06', 'project' => 'unallocated'],
@@ -97,8 +181,8 @@ foreach ($data['projects'] as $name => $value) {
 require_once 'CRM/Core/BAO/CustomField.php';
 $worth_field_id = 'custom_' . CRM_Core_BAO_CustomField::getCustomFieldID('pelf_worth_percent', 'pelf_venture_details');
 
-// Lookup the case type id
-$venture_case_type_id = civicrm_api3('CaseType', 'getvalue', ['return' => 'id', 'name' => 'pelf_venture']);
+// Lookup the case type id for the pelf_grant
+$grant_case_type_id = civicrm_api3('CaseType', 'getvalue', ['return' => 'id', 'name' => 'pelf_grant']);
 
 // Create cases
 foreach ($data['cases'] as &$case) {
@@ -111,7 +195,7 @@ foreach ($data['cases'] as &$case) {
       'subject'       => $case['subject'],
       'contact_id'    => $data['funders'][$case['client']]['id'],
       'status_id'     => $case['status_id'],
-      'case_type_id'  => $venture_case_type_id,
+      'case_type_id'  => $grant_case_type_id,
       'creator_id'    => $data['staff'][$case['coordinator']]['id'],
       $worth_field_id => $case['worth_percent'],
     ];

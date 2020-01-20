@@ -1,0 +1,84 @@
+<div class="crm-container">
+  <h1 crm-page-title>{{ts('Setup Pelf')}}</h1>
+  <p>{{ts('Pelf builds on CiviCase to provide a way to track efforts to secure income through a partnership, grant or major donation. Often these processes can be described as a pipeline of stages - from initial research through to application submission, negotiation etc.')}}</p>
+  <p>{{ts('To use it you need to define one or more Case types, e.g. "Grant", "Partnership" and set it up here. Pelf provides some models but you can set it up with whatever types and stages fit your organisation.')}}</p>
+  </p>
+  <div ng-if="isLoading" >Loading...</div>
+  <form name="pelf_setup" crm-ui-id-scope ng-if="!isLoading">
+    <div>
+      <h2>Case Types</h2>
+      <div ng-if="pelfConfig.caseTypes.length == 0"
+           class="message warning">
+        {{ts('No Case Types are in use by Pelf')}}
+      </div>
+      <ul>
+        <li
+          ng-repeat="caseTypeName in pelfConfig.caseTypes"
+          class="pelf-setup__casetype">
+          {{caseTypes[caseTypeName].title}}
+          <a href class="danger" ng-click="handleRemoveCaseType(caseTypeName)" >Remove</a>
+        </li>
+      </ul>
+      <label crm-ui-for="addCaseType">Add Case Type to Pelf</label>
+      <select crm-ui-id="addCaseType" ng-model="edits.addCase" ng-change="handleAddCaseType()">
+        <option ng-repeat="caseType in caseTypes"
+                ng-if="pelfConfig.caseTypes.indexOf(caseType.name) < 0"
+                value="{{caseType.name}}"
+                >{{caseType.title}}</option>
+      </select>
+
+      <h2>{{ts('Phases')}}</h2>
+      <p>{{ts('Which case statuses belong to which phase?')}}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>{{ts('Status')}}</th>
+            <th>{{ts('Phase')}}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="status in caseStatusesInUse">
+            <td>{{ status.label }}</td>
+            <td>
+              <select ng-model="pelfConfig.statusMeta[status.name].phase" ng-change="saveConfig()">
+                <option value="">--please select--</option>
+                <option ng-repeat="phase in ['prospect', 'live', 'complete', 'failed', 'dropped']"
+                        ng-if="status.grouping == phases[phase].grouping"
+                        value="{{phase}}">{{phases[phase].title}}</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Templates</h2>
+      <p>Setting up cases can be a bore. If you like you can use the following
+        templates. You can edit the cases at any time, adding new statuses etc.
+        These templates are just to get you started; you do not have to use
+      them.</p>
+
+      <div ng-repeat="tpl in templates">
+        <h3>Case Type: {{tpl.title}}</h3>
+        <p ng-if="tpl.exists" >This case type exists. You are free to edit it however you wish, using the normal CiviCase screens.</p>
+        <p ng-if="!tpl.exists" ><a ng-click="handleCreateFromTemplate(tpl)" href >Create this case type, and all required statuses</a>. You can edit these later.</p>
+        <table>
+          <thead><tr><th>Status</th><th>Description</th><th>Phase</th><th></th></tr></thead>
+          <tbody>
+            <tr ng-repeat="st in tpl.statuses">
+              <td>{{ts(st.label)}}</td>
+              <td>{{ts(st.description)}}</td>
+              <td>{{ phases[st.phase].title }}</td>
+              <td>
+                <a href
+                   ng-click="handleAddTemplateStatus(st)"
+                   ng-if="! st.exists">{{ts('Create')}}</a>
+                <span ng-if="st.exists">{{ts('Exists')}}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </form>
+</div>

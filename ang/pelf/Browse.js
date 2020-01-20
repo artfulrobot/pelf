@@ -17,6 +17,10 @@
         //   }
         // }
       });
+      $routeProvider.when('/pelf/browse/type/:case_type', {
+        controller: 'PelfBrowse',
+        templateUrl: '~/pelf/Browse.html',
+      });
     }
   );
 
@@ -24,7 +28,7 @@
   //   $scope -- This is the set of variables shared between JS and HTML.
   //   crmApi, crmStatus, crmUiHelp -- These are services provided by civicrm-core.
   //   myContact -- The current contact, defined above in config().
-  angular.module('pelf').controller('PelfBrowse', function($scope, crmApi, crmStatus, crmUiHelp) {
+  angular.module('pelf').controller('PelfBrowse', function($scope, crmApi, crmStatus, crmUiHelp, $routeParams) {
     // The ts() and hs() functions help load strings for this module.
     var ts = $scope.ts = CRM.ts('pelf');
     var hs = $scope.hs = crmUiHelp({file: 'CRM/pelf/Browse'}); // See: templates/CRM/pelf/Browse.hlp
@@ -44,7 +48,9 @@
     $scope.statusFilterOptions = {results:[]};
     $scope.projectPivot = [];
     $scope.projects = [];
+    $scope.pageTitle = 'Pelf: All Cases';
     $scope.$watch('filters', applySortAndFilter, true);
+    $scope.totals = { adjusted: 0, total: 0 };
 
     function applySortAndFilter() {
       $scope.sortedCases = [];
@@ -89,7 +95,8 @@
 
       if ($scope.filters.sort == 'Status') {
         $scope.sortedCases.sort((a, b) => {
-          return b.status_id - a.status_id;
+          console.log("Comparing", { a: $scope.case_statuses[a.status_id].weight, b: $scope.case_statuses[b.status_id].weight});
+          return parseInt($scope.case_statuses[a.status_id].weight) - parseInt($scope.case_statuses[b.status_id].weight);
         });
       }
       else if ($scope.filters.sort == 'Worth') {
@@ -128,6 +135,7 @@
       $scope.projects = r.projects;
       $scope.pivotStatus = r.pivot_status;
       $scope.pivotProjects = r.pivot_projects;
+      $scope.totals = r.totals;
       $scope.projectsFilterOptions.results = [];
       for (const key in r.projects) {
         if (r.projects.hasOwnProperty(key)) {
@@ -139,7 +147,15 @@
       $scope.yearsFilterOptions.results = r.financial_years.map(y => ({id: y, text: y}));
 
       $scope.case_statuses = r.case_statuses;
+      $scope.sorted_case_statuses= CRM._.sortBy(CRM._.values(r.case_statuses), 'weight');
       $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
+
+      $scope.pageTitle = 'Pelf: All Cases';
+      if ($routeParams.case_type) {
+        if (r.caseTypes[parseInt($routeParams.case_type)]) {
+          $scope.pageTitle = 'Pelf: ' + r.caseTypes[parseInt($routeParams.case_type)].title + ' cases';
+        }
+      }
 
       applySortAndFilter();
     }
@@ -151,6 +167,11 @@
     const reload = function reload() {
       $scope.state = 'loading';
       params = Object.assign({}, $scope.filters);
+
+      // Case Type match?
+      if ($routeParams.case_type) {
+        params.case_type_id = $routeParams.case_type;
+      }
       crmApi('Pelf', 'getbrowse', params).then(updateData, handleFail);
     }
     $scope.reload = reload;

@@ -1,0 +1,22 @@
+site_name: Pelf - Pipelines for seeking grants and partnerships
+repo_url: https://github.com/artfulrobot/pelf
+theme: material
+
+pages:
+- Home: index.md
+- Tutorial: tutorial.md
+- Reference:
+    - 'Configuration': reference/config.md
+
+markdown_extensions:
+  - attr_list
+  - admonition
+  - def_list
+  - codehilite
+  - toc(permalink=true)
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - pymdownx.tilde
+  - pymdownx.betterem
+  - pymdownx.mark
+

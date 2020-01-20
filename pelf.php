@@ -156,18 +156,31 @@ function pelf_civicrm_preProcess($formName, &$form) {
  * Implements hook_civicrm_navigationMenu().
  *
  * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_navigationMenu
- *
+ */
 function pelf_civicrm_navigationMenu(&$menu) {
-  _pelf_civix_insert_navigation_menu($menu, 'Mailings', array(
-    'label' => E::ts('New subliminal message'),
-    'name' => 'mailing_subliminal_message',
-    'url' => 'civicrm/mailing/subliminal',
-    'permission' => 'access CiviMail',
+  _pelf_civix_insert_navigation_menu($menu, 'Administer/CiviCase', array(
+    'label' => E::ts('Setup Pelf'),
+    'name' => 'pelf_config',
+    'url' => 'civicrm/a#pelf/setup',
+    'permission' => 'administer civicase',
     'operator' => 'OR',
     'separator' => 0,
   ));
+
+  foreach (pelf()->getCaseTypes() as $id => $_) {
+    _pelf_civix_insert_navigation_menu($menu, 'Cases', array(
+      'label'      => 'Pelf: ' . $_['title'],
+      'name'       => 'pelf_browse_type_' . $id,
+      'url'        => 'civicrm/a#pelf/browse/type/' . $id,
+      'permission' => 'access my cases and activities,access all cases and activities',
+      'operator'   => 'OR',
+      'separator'  => 0,
+    ));
+  }
   _pelf_civix_navigationMenu($menu);
-} // */
+}
+
+
 /**
  * Syntatic sugar.
  *

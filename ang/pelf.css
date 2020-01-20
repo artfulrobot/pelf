@@ -55,3 +55,40 @@ article.pelf-browse__case-item h1 {
   flex: 1 0 auto;
   padding: 0.5rem;
 }
+/* Summary tables */
+td.pelf-financial__no-padding
+{
+  padding:0 !important;
+}
+.pelf-money { text-align: right; }
+.pelf-status-label { padding: 0.25rem 0.5rem; }
+/** background barcharts */
+.pelf-bg-barchart {
+  height: 2rem;
+  min-width: 5rem;
+  position: relative;
+}
+.pelf-bg-barchart__bar {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background-color: #cacaca;
+}
+.pelf-bg-barchart__text {
+  line-height: 2rem;
+  position: relative;
+  z-index: 2;
+  padding: 0 0.5rem;
+}
+.pelf-summary-tables {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -2rem;
+}
+
+.pelf-summary-tables__table {
+  flex: 1 0 auto;
+  padding: 0 2rem;
+}
