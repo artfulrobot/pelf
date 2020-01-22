@@ -2,6 +2,12 @@
 if (php_sapi_name() !== 'cli') {
   exit;
 }
+function deleteActivities($params) {
+  $activities = civicrm_api3('Activity', 'get', $params)['values'] ?? [];
+  foreach ($activities as $activity) {
+    civicrm_api3('Activity', 'delete', ['id' => $activity['id']]);
+  }
+}
 
 try {
 
@@ -105,6 +111,10 @@ JSON;
         'options' => ['limit' => 0],
       ]);
       foreach ($cases['values'] ?? [] as $row) {
+
+        // First delete activities.
+        deleteActivities([ 'case_id' => $row['id'] ]);
+
         print "deleting case $row[id]\n";
         civicrm_api3('Case', 'delete', ['id' => $row['id']]);
       }
@@ -117,7 +127,7 @@ JSON;
       ->execute();
     foreach ($case_statuses as $_) {
       Civi\Api4\OptionValue::delete()
-        ->addWhere('id.name', '=',$_['id'])
+        ->addWhere('id', '=',$_['id'])
         ->execute();
     }
 
@@ -127,10 +137,18 @@ JSON;
       print "deleted Case Type $name\n";
     }
 
-    // Delete sample contacts
-
-
     // @todo delete projects
+    try {
+      Civi\Api4\OptionValue::delete()
+        ->addWhere('option_group.name', '=', 'pelf_project')
+        ->setCheckPermissions(FALSE)
+        ->execute();
+    }
+    catch (API_Exception $e) {
+      if (!preg_match('/Cannot delete OptionValue, no records found/', $e->getMessage())) {
+        throw $e;
+      }
+    }
 
   $data = [
     'funders' => [
@@ -141,43 +159,64 @@ JSON;
       'Wilma',
       'Betty',
       'Barney',
-    ],
-    'projects' => [
-      'unallocated' => 1,
-      'activism' => 2,
+      'Wilma Test',
+      'Betty Test',
+      'Barney Test',
     ],
   ];
 
   // Delete funders.
   foreach ($data['funders'] as $display_name) {
     // exists?
-    $id = civicrm_api3('contact', 'get', [
-      'organization_name' => $display_name,
-      'contact_type' => 'Organization',
-    ])['id'] ?? NULL;
 
-    if ($id) {
+    $contacts = civicrm_api3('contact', 'get', [
+      'display_name' => $display_name,
+      'contact_type' => 'Organization',
+      'return' => ['id'],
+    ])['values'] ?? [];
+    foreach ($contacts as $contact) {
+      $id = $contact['id'];
+      // delete activities.
+      try {
+        \Civi\Api4\Activity::delete()
+          ->addWhere('activity_contacts.contact_id', '=', $id)
+          ->setCheckPermissions(FALSE)
+          ->execute();
+      }
+      catch (API_Exception $e) {
+        if (!preg_match('/no records found/', $e->getMessage())) throw $e;
+      }
+
       civicrm_api3('contact', 'delete', [
         'skip_undelete' => 1, 'id' => $id ]);
       print "Deleted contact $id: $display_name\n";
     }
-    unset($funder);
   }
 
   // Delete staff.
   foreach ($data['staff'] as $display_name) {
     // exists?
-    $id = civicrm_api3('contact', 'get', [
-      'organization_name' => $display_name,
+    $contacts = civicrm_api3('contact', 'get', [
+      'display_name' => $display_name,
       'contact_type' => 'Individual',
-    ])['id'] ?? NULL;
-
-    if ($id) {
+      'return' => ['id'],
+    ])['values'] ?? [];
+    foreach ($contacts as $contact) {
+      $id = $contact['id'];
+      // delete activities.
+      try {
+        \Civi\Api4\Activity::delete()
+          ->addWhere('activity_contacts.contact_id', '=', $id)
+          ->setCheckPermissions(FALSE)
+          ->execute();
+      }
+      catch (API_Exception $e) {
+        if (!preg_match('/no records found/', $e->getMessage())) throw $e;
+      }
       civicrm_api3('contact', 'delete', [
         'skip_undelete' => 1, 'id' => $id ]);
-      print "Deleted contact $id: $display_name\n";
+      print "Deleted staff contact $id: $display_name\n";
     }
-    unset($funder);
   }
 
   // Get rid of projects.

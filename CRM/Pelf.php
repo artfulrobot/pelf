@@ -19,6 +19,9 @@ class CRM_Pelf {
    */
   public $case_stage_option_group_id;
 
+  public $activity_type_option_group_id;
+  /** I believe this is always a constant */
+  public $activity_record_type_assignee = 1;
   /** @var array from decoded pelf_config setting */
   protected $config;
   /**
@@ -33,6 +36,7 @@ class CRM_Pelf {
 
   public function __construct() {
     $this->case_stage_option_group_id = (int) civicrm_api3('OptionGroup', 'getvalue', ['return' => 'id', 'name'=>'case_status']);
+    $this->activity_type_option_group_id = (int) civicrm_api3('OptionGroup', 'getvalue', ['return' => 'id', 'name'=>'activity_type']);
     $this->getConfig();
   }
   /**
@@ -177,12 +181,30 @@ class CRM_Pelf {
 
     $case_ids_sql = implode(',', array_keys($cases));
 
-    // Fetch clients
-    $clients = [];
+    // Fetch all projects.
+    $projects = Civi\Api4\OptionValue::get()
+      ->setSelect(['value', 'label', 'color', 'grouping'])
+      ->addWhere('option_group.name', '=', 'pelf_project')
+      ->addWhere('is_active', '=', 1)
+      ->addOrderBy('label')
+      ->execute()
+      ->indexBy('value');
+
+    $summary_pivot_project_empty = [];
+    foreach ($projects as $project) {
+      preg_match('/^(.*?)\s*:\s*(.*)$/', $project['label'], $_);
+      $project_group = $_[1] ?? '(Ungrouped)';
+      $project_name = $_[2] ?? $dao->project;
+      $summary_pivot_project_empty[$project_group][$project_name] = [];
+    }
+
     if ($cases) {
+
+      // Fetch all clients for these cases
       $clients_linked = CRM_Core_DAO::executeQuery(
         "SELECT contact_id, case_id FROM civicrm_case_contact WHERE case_id IN ($case_ids_sql)"
         )->fetchAll();
+      $clients = [];
       foreach ($clients_linked as $row) {
         $client_contact_id = (int) $row['contact_id'];
         $case_id = (int) $row['case_id'];
@@ -198,17 +220,20 @@ class CRM_Pelf {
         $clients[$client['id']] = $client;
       }
 
+      // Fetch last completed activity and first scheduled one.
+      $this->addNearActivities($cases);
+
       // Fetch Allocations for these cases.
       // Helpful to know which projects are encountered for each case.
       $sql = "SELECT * FROM civicrm_pelf_funds_allocation WHERE case_id IN ($case_ids_sql) ORDER BY fy_start";
       $dao = CRM_Core_DAO::executeQuery($sql);
       $financial_years = [];
       $projects_by_case = [];
-      $summary_pivot_project = [];
+      $summary_pivot_project = $summary_pivot_project_empty;
       $summary_pivot_status = [];
       $totals = ['total' => 0, 'adjusted' => 0];
 
-      // Turn flat list into [fy][proj] = total pivot
+      // Turn flat list into [project_group][project_name][fy][proj][adjusted|total] = total amount
       while ($dao->fetch()) {
         $_ = $dao->toArray();
         $case = $cases[$dao->case_id];
@@ -231,11 +256,14 @@ class CRM_Pelf {
         $totals['adjusted'] += $dao->amount * $case['worth_percent']/100;
 
         // Project pivot calcs.
-        if (!isset($summary_pivot_project[$dao->project])) {
-          $summary_pivot_project[$dao->project] = ['total' => 0, 'adjusted' => 0];
+        preg_match('/^(.*?)\s*:\s*(.*)$/', $projects[$dao->project]['label'], $_);
+        $project_group = $_[1] ?? '(Ungrouped)';
+        $project_name = $_[2] ?? $dao->project;
+        if (!isset($summary_pivot_project[$project_group][$project_name][$year])) {
+          $summary_pivot_project[$project_group][$project_name][$year] = ['total' => 0, 'adjusted' => 0];
         }
-        $summary_pivot_project[$dao->project][$year]['total'] += $dao->amount;
-        $summary_pivot_project[$dao->project][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
+        $summary_pivot_project[$project_group][$project_name][$year]['total'] += $dao->amount;
+        $summary_pivot_project[$project_group][$project_name][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
 
         // Status pivot calcs.
         if (!isset($summary_pivot_status[$case['status_id']])) {
@@ -255,12 +283,30 @@ class CRM_Pelf {
       }
     }
 
-    // Fetch all projects. @todo is active
-    $projects = Civi\Api4\OptionValue::get()
-      ->setSelect(['value', 'label', 'color', 'grouping'])
-      ->addWhere('option_group.name', '=', 'pelf_project')
-      ->execute()
-      ->indexBy('value');
+    // Project pivot
+    // We want totals by project group
+    $new = [];
+    foreach ($summary_pivot_project as $project_group => $by_project) {
+      $subtots = [];
+      foreach ($by_project as $project => $by_year) {
+        foreach ($by_year as $year => $_) {
+          if (!isset($subtots[$year])) {
+            $subtots[$year] = ['total' => 0, 'adjusted' => 0];
+          }
+          $subtots[$year]['total'] += $_['total'];
+          $subtots[$year]['adjusted'] += $_['adjusted'];
+        }
+      }
+      $summary_pivot_project[$project_group]['Subtotal'] = $subtots;
+      // Flatten the project group back in to the project.
+      foreach ($summary_pivot_project[$project_group] as $project_name => $_) {
+        $new["$project_group: $project_name"] = $_;
+      }
+    }
+    $summary_pivot_project = $new;
+    // PHP remembers the order of array keys, but whn converted to JSON and then to a js object the order is not preserved.
+    // Therefore we now create an array to preserve the order.
+    $summary_pivot_project = $this->hashToArray($summary_pivot_project, 1);
 
     // Fetch all case statuses. @todo is active
     $case_statuses = Civi\Api4\OptionValue::get()
@@ -282,6 +328,84 @@ class CRM_Pelf {
       'pivot_projects'  => $summary_pivot_project,
       'pivot_status'    => $summary_pivot_status,
     ];
+  }
+  protected function addNearActivities(&$cases) {
+    // First find the last completed activity for each case.
+
+    // Do this with SQL to get most of the data, then filter it by running the
+    // activities through API4 to apply permissions.
+    implode(',', array_map(function ($_) { return (int) $_; }, array_column($cases, 'id')));
+
+    $case_ids = [];
+    foreach ($cases as &$case) {
+      $case += ['activityLast' => NULL, 'activityNext' => NULL];
+      $case_ids[] = (int) $case['id'];
+    }
+    if (!$case_ids) {
+      return;
+    }
+    $case_ids = implode(',', $case_ids);
+    $sql = "SELECT
+      a.id, a.subject, a.activity_date_time,
+      atype.label activity_type,
+      ca.case_id,
+      (
+        SELECT GROUP_CONCAT(c.display_name SEPARATOR ', ')
+        FROM civicrm_activity_contact ac
+          INNER JOIN civicrm_contact c ON c.id = ac.contact_id
+        WHERE ac.activity_id = a.id AND ac.record_type_id = $this->activity_record_type_assignee
+      ) assigees
+      FROM civicrm_activity a
+      INNER JOIN civicrm_case_activity ca
+        ON ca.activity_id = a.id AND ca.case_id IN ($case_ids)
+      INNER JOIN civicrm_option_value atype
+        ON atype.value = a.activity_type_id AND atype.option_group_id = $this->activity_type_option_group_id
+      WHERE
+        a.activity_date_time < NOW()
+        AND NOT EXISTS (
+          SELECT 1
+          FROM civicrm_case_activity ca2
+          INNER JOIN civicrm_activity a2 ON ca2.activity_id = a2.id AND ca2.case_id = ca2.case_id
+          WHERE a2.activity_date_time > a.activity_date_time AND a2.activity_date_time < NOW()
+        )
+    ";
+    $results = CRM_Core_DAO::executeQuery($sql);
+    // @todo check permissions
+    while ($results->fetch()) {
+      $cases[$results->case_id]['activityLast'] = $results->toArray();
+      $cases[$results->case_id]['activityLast']['activity_date_time'] =
+        date('j M Y', strtotime($cases[$results->case_id]['activityLast']['activity_date_time']));
+    }
+
+    $sql = "SELECT
+      a.id, a.subject, a.activity_date_time,
+      atype.label,
+      ca.case_id,
+      (
+        SELECT GROUP_CONCAT(c.display_name SEPARATOR ', ')
+        FROM civicrm_activity_contact ac
+          INNER JOIN civicrm_contact c ON c.id = ac.contact_id
+        WHERE ac.activity_id = a.id AND ac.record_type_id = $this->activity_record_type_assignee
+      ) assigees
+      FROM civicrm_activity a
+      INNER JOIN civicrm_case_activity ca
+        ON ca.activity_id = a.id AND ca.case_id IN ($case_ids)
+      INNER JOIN civicrm_option_value atype
+        ON atype.value = a.activity_type_id AND atype.option_group_id = $this->activity_type_option_group_id
+      WHERE
+        a.activity_date_time > NOW()
+        AND NOT EXISTS (
+          SELECT 1
+          FROM civicrm_case_activity ca2
+          INNER JOIN civicrm_activity a2 ON ca2.activity_id = a2.id AND ca2.case_id = ca2.case_id
+          WHERE a2.activity_date_time < a.activity_date_time AND a2.activity_date_time > NOW()
+        )
+    ";
+    $results = CRM_Core_DAO::executeQuery($sql);
+    // @todo check permissions
+    while ($results->fetch()) {
+      $cases[$results->case_id]['activityNext'] = $results->toArray();
+    }
   }
   /**
    * Create the case status.
@@ -329,6 +453,9 @@ class CRM_Pelf {
     $case_type_id = civicrm_api3('CaseType', 'get', [ 'return' => 'id', 'name' => $tpl['name'] ])['id'] ?? NULL;
     if (!$case_type_id) {
       // Create it.
+      if (empty($tpl['title'])) {
+        throw new \InvalidArgumentException(__FUNCTION__ . " input is missing 'title' parameter.");
+      }
       $params = [
         'name'  => $tpl['name'],
         'title' => $tpl['title'],
@@ -397,5 +524,43 @@ class CRM_Pelf {
 
     // @todo how do we associate the statuses with the case type?
 
+  }
+  /**
+   *
+   * Called with max_level = 2 and the following data:
+   * [ '2020' => [
+   *      'Jan' => <whatever1>,
+   *      'Feb' => <whatever2>,
+   *      ],
+   *   '2021' => [
+   *      'Jan' => <whatever3>,
+   *      ]
+   * ]
+   *
+   * we should return:
+   * [
+   *   [ 'key' => '2020',
+   *     'data' => [
+   *        [ 'key' => 'Jan', 'data' => <whatever1> ],
+   *        [ 'key' => 'Feb', 'data' => <whatever2> ],
+   *     ],
+   *   ],
+   *   [ 'key' => '2021',
+   *     'data' => [
+   *        [ 'key' => 'Jan', 'data' => <whatever3> ],
+   *     ],
+   *   ],
+   * ]
+   *
+   */
+  public function hashToArray($hash, $max_level) {
+    $sorted = [];
+    foreach ($hash as $k => $v) {
+      if (is_array($v) && $max_level > 1) {
+        $v = $this->hashToArray($v, $max_level - 1);
+      }
+      $sorted[] = ['key' => $k, 'data' => $v];
+    }
+    return $sorted;
   }
 }

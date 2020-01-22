@@ -105,8 +105,8 @@ $data = [
     'staff_c' => [ 'display_name' => 'Barney', ],
   ],
   'projects' => [
-    'unallocated' => 1,
-    'activism' => 2,
+    'Unallocated' => 1,
+    'Activism' => 2,
   ],
   'cases' => [
     'case_a' => [

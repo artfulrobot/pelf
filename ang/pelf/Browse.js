@@ -34,6 +34,7 @@
     var hs = $scope.hs = crmUiHelp({file: 'CRM/pelf/Browse'}); // See: templates/CRM/pelf/Browse.hlp
 
     $scope.state = 'loading';
+    $scope.listDetails = 'activity';
     $scope.sortedCases = [];
     $scope.cases = {};
     $scope.filters = {
@@ -41,7 +42,7 @@
       projects: [],
       status: [],
       years: [],
-      adjusted: false
+      adjusted: true
     };
     $scope.projectsFilterOptions = {results:[]};
     $scope.yearsFilterOptions = {results:[]};
@@ -95,7 +96,6 @@
 
       if ($scope.filters.sort == 'Status') {
         $scope.sortedCases.sort((a, b) => {
-          console.log("Comparing", { a: $scope.case_statuses[a.status_id].weight, b: $scope.case_statuses[b.status_id].weight});
           return parseInt($scope.case_statuses[a.status_id].weight) - parseInt($scope.case_statuses[b.status_id].weight);
         });
       }
@@ -147,7 +147,8 @@
       $scope.yearsFilterOptions.results = r.financial_years.map(y => ({id: y, text: y}));
 
       $scope.case_statuses = r.case_statuses;
-      $scope.sorted_case_statuses= CRM._.sortBy(CRM._.values(r.case_statuses), 'weight');
+      $scope.sorted_case_statuses= CRM._.sortBy(CRM._.values(r.case_statuses), s => parseInt(s.weight));
+      console.log({unsorted: r.case_statuses, sorted: $scope.sorted_case_statuses});
       $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
 
       $scope.pageTitle = 'Pelf: All Cases';

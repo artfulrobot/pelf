@@ -47,15 +47,6 @@
         </div>
 
         <div class="pelf-browse__filter">
-          <label for="pelf-sort">Sort by</label>
-          <select id="pelf-sort" ng-model="filters.sort" >
-            <option value="Status">Status</option>
-            <option value="Worth">Worth</option>
-            <option value="Adjusted Worth">Adjusted Worth</option>
-          </select>
-        </div>
-
-        <div class="pelf-browse__filter">
           <input crm-ui-id="filters_adjusted"
                  type="checkbox"
                  ng-model="filters.adjusted" />
@@ -71,19 +62,21 @@
         <table class="pelf-financial">
           <thead> <tr> <th>Project</th>
               <th ng-repeat="fy in financial_years">{{fy}}</th>
-            </tr> </thead>
+            </tr>
+          </thead>
           <tbody>
-            <tr ng-repeat="row in projects" >
-              <td class="pelf-financial__no-padding"><div class="pelf-status-label">{{row.label}}</div></td>
+            <tr ng-repeat="row in pivotProjects" >
+              <td class="pelf-financial__no-padding"><div class="pelf-status-label">{{row.key}}</div></td>
               <td ng-repeat="fy in financial_years"
                 class="pelf-financial__no-padding">
                 <div class="pelf-bg-barchart" >
                   <div class="pelf-bg-barchart__bar"
                        ng-if="totals[filters.adjusted ? 'adjusted' : 'total'] != 0"
-                       ng-style="{ width: pivotProjects[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
+                       ng-style="{ width: row.data[fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%',
+                                   left: 0 }">
                   </div>
                   <div class="pelf-bg-barchart__text pelf-money" >
-                    {{pivotProjects[row.value][fy][filters.adjusted ? 'adjusted' : 'total']}}
+                    {{row.data[fy][filters.adjusted ? 'adjusted' : 'total']}}
                   </div>
                 </div>
               </td>
@@ -108,8 +101,11 @@
                 <div class="pelf-bg-barchart" >
                   <div class="pelf-bg-barchart__bar"
                        ng-if="totals[filters.adjusted ? 'adjusted' : 'total'] != 0"
-                       ng-style="{ width: pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%' }">
-                  </div>
+                       ng-style="{ width: pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%',
+                                   left: (50 - pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 50) + '%',
+                                   backgroundColor: row.color,
+                                   opacity: 0.5
+                                   }"></div>
                   <div class="pelf-bg-barchart__text pelf-money" >
                     {{pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total']}}
                   </div>
@@ -124,6 +120,25 @@
 
 
     <!-- ====================================== Listings ====================================== -->
+    <div class="pelf-browse__filters">
+      <div class="pelf-browse__filter">
+        <label for="pelf-sort">Sort by</label>
+        <select id="pelf-sort" ng-model="filters.sort" >
+          <option value="Status">Status</option>
+          <option value="Worth">Worth</option>
+          <option value="Adjusted Worth">Adjusted Worth</option>
+        </select>
+
+      </div>
+      <div class="pelf-browse__filter">
+        Details:
+        <span ng-class="(listDetails == 'financial') ? 'pelf-browse__details-selected' : 'pelf-browse__details-deselected' "
+              ng-click="listDetails = 'financial'">Financial</span>
+        <span ng-class="(listDetails == 'activity') ? 'pelf-browse__details-selected' : 'pelf-browse__details-deselected' "
+              ng-click="listDetails = 'activity'">Activity</span>
+      </div>
+    </div>
+
     <ul class="pelf-browse__table">
       <li ng-repeat="case in sortedCases"
           class="pelf-browse__case {{ case_statuses[case.status_id].grouping }}"
@@ -144,7 +159,8 @@
               <div>&pound;{{ pelfMoney(case.funds_total, case) }}</div><!-- @todo lookup local currency -->
               <small>{{ case.worth_percent }}%</small>
             </div>
-            <div class="pelf-browse__case-allocations">
+
+            <div class="pelf-browse__case-allocations" ng-if="listDetails === 'financial'">
               <table>
                 <thead>
                   <tr><th>Project</th>
@@ -158,6 +174,22 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+
+            <div class="pelf-browse__case-activities" ng-if="listDetails === 'activity'">
+              <div ng-if="case.activityLast">
+                Last: {{case.activityLast.activity_type}} {{case.activityLast.activity_date_time}}<br/>
+                <div>{{case.activityLast.subject}}</div>
+                <div><i class="crm-i">&#xf2bd;</i> {{case.activityLast.assigees}}</div>
+              </div>
+              <div ng-if="case.activityNext">
+                Next: {{case.activityNext.activity_type}} {{case.activityNext.activity_date_time}}<br/>
+                <div>{{case.activityNext.subject}}</div>
+                <div><i class="crm-i">&#xf2bd;</i> {{case.activityNext.assigees}}</div>
+              </div>
+              <div ng-if="!case.activityNext">
+                Next: Nothing scheduled
+              </div>
             </div>
           </article>
       </li>

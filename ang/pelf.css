@@ -27,12 +27,16 @@ article.pelf-browse__case-item {
 .pelf-browse__case-allocations {
   flex: 10 0 12rem;
 }
+.pelf-browse__case-activities {
+  flex: 10 0 12rem;
+}
 article.pelf-browse__case-item h1 {
 }
 article.pelf-browse__case-item h1 {
   margin: 0;
   font-size: 1.2rem;
 }
+/** The little case fund allocations tables */
 #crm-container .pelf-browse__case-allocations table {
   margin:0;
   border:none;
@@ -42,9 +46,12 @@ article.pelf-browse__case-item h1 {
 #crm-container .pelf-browse__case-allocations table th
 {
   padding:0.25rem 0.5rem;
-  border-style: none;
   text-align: right;
+  background: none;
+  border: none;
+  border-right: solid 1px #ececec;
 }
+
 .pelf-browse__filters {
   display: flex;
   flex-wrap: wrap;
@@ -56,6 +63,9 @@ article.pelf-browse__case-item h1 {
   padding: 0.5rem;
 }
 /* Summary tables */
+table.pelf-financial {
+  background: white;
+}
 td.pelf-financial__no-padding
 {
   padding:0 !important;
@@ -75,7 +85,7 @@ td.pelf-financial__no-padding
   height: 100%;
   width: 0;
   background-color: #aecde4;
-  transition: width 0.3s;
+  transition: width 0.3s, left 0.3s;
 }
 .pelf-bg-barchart__text {
   line-height: 2rem;
@@ -88,8 +98,23 @@ td.pelf-financial__no-padding
   flex-wrap: wrap;
   margin: 0 -2rem;
 }
-
 .pelf-summary-tables__table {
   flex: 1 0 auto;
   padding: 0 2rem;
 }
+.pelf-browse__case-activities {
+  display:flex;
+  flex-wrap:wrap;
+  margin: 0 -0.5rem;
+}
+.pelf-browse__case-activities>div {
+  flex: 1 0 10rem;
+}
+.pelf-browse__details-deselected,
+.pelf-browse__details-selected {
+  display: inline-block;
+  padding: 0 0.5rem;
+  cursor: pointer;
+}
+.pelf-browse__details-selected { background-color: #aecde4; }
+.pelf-browse__details-deselected:hover {background-color: #aecde4; }
