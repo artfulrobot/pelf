@@ -599,4 +599,25 @@ class CRM_Pelf {
 
     return $options;
   }
+  /**
+   * Throw an exception if the case does not exist, or if it's not a Pelf case type.
+   */
+  public function validateCaseId($id) {
+    civicrm_api3('Case', 'getsingle', ['id' => $id, 'case_type_id' => ['IN' => array_keys($this->caseTypes)]]);
+  }
+  /**
+   * Get projects, indexed by the option value.
+   *
+   * @return array
+   */
+  public function getProjects() {
+    return Civi\Api4\OptionValue::get()
+      ->setSelect(['value', 'label', 'color', 'grouping'])
+      ->addWhere('option_group.name', '=', 'pelf_project')
+      ->addWhere('is_active', '=', 1)
+      ->addOrderBy('label')
+      ->execute()
+      ->indexBy('value')
+      ->getArrayCopy();
+  }
 }

@@ -48,15 +48,7 @@ function civicrm_api3_pelf_Getventure($params) {
   $returnValues['fiscalYears'] = $pelf->getFiscalYearsOptions(array_keys($fiscalYears));
 
   // We'll need all the projects.
-  $returnValues['projects'] = Civi\Api4\OptionValue::get()
-    ->setSelect(['value', 'label', 'color', 'grouping'])
-    ->addWhere('option_group.name', '=', 'pelf_project')
-    ->addWhere('is_active', '=', 1)
-    ->addOrderBy('label')
-    ->execute()
-    ->indexBy('value')
-    ->getArrayCopy();
-
+  $returnValues['projects'] =  pelf()->getProjects();
   return civicrm_api3_create_success($returnValues, $params, 'Pelf', 'Getventure');
   // throw new API_Exception(/*error_message*/ 'Everyone knows that the magicword is "sesame"', /*error_code*/ 'magicword_incorrect');
 }

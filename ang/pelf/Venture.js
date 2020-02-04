@@ -20,26 +20,53 @@
     function updateData(r) {
       const venture = r.values;
       $scope.state = 'loaded';
+      $scope.dirty = false;
       $scope.projects = {};
-      _.each(venture.projects, proj => { $scope.projects[proj.id] = proj; });
+      _.each(venture.projects, proj => { $scope.projects[proj.value] = proj; });
+      _.each(venture.funds, row => { row.amount = Math.round(parseFloat(row.amount)); })
       $scope.venture = venture;
       $scope.pageTitle = venture.subject;
+      $scope.recalculateTotals();
+      // Sort funds by financial year, project
+      $scope.venture.funds = _.sortByAll($scope.venture.funds, ['fy_start', 'project']);
     }
 
     // Called when an API call failed.
     function handleFail(r) {
       console.error("handleFail", r);
       alert(r.error_message);
-      return;
+      return false;
     }
 
-    $scope.recalculateTotals = function recalculateTotals() {
+    $scope.recalculateTotals = function recalculateTotals(row) {
+      if (row) {
+        row.changed = true;
+        $scope.dirty = true;
+      }
       $scope.total = 0;
-      _.each($scope.venture.funds, row => { $scope.total += row.amount; });
+      const p = {}, y = {};
+      _.each($scope.venture.funds, row => {
+        const amount = parseFloat(row.amount);
+        $scope.total += amount;
+        p[row.project]  = (p[row.project]  || 0 ) + amount;
+        y[row.fy_start] = (y[row.fy_start] || 0 ) + amount;
+      });
+
+      $scope.projectTotals = [];
+      $scope.fiscalYearTotals = [];
+      $scope.projectTotals = _.map(_.sortBy(_.keys(p), projectValue => $scope.projects[projectValue].label),
+        projectValue => {
+          return {name: $scope.projects[projectValue].label, total: p[projectValue] };
+      });
+      $scope.yearTotals = _.map(_.sortBy(_.keys(y)),
+        year => { return {name: $scope.venture.fiscalYears[year], total: y[year] }; });
     };
 
     // Initial state is loading.
     $scope.state = 'loading';
+    $scope.projectTotals = [];
+    $scope.fiscalYearTotals = [];
+    $scope.dirty = false;
 
     // Load data via API call.
     $scope.reload = function reload() {
@@ -53,6 +80,16 @@
       params = { id: $routeParams.case_id };
       crmApi('Pelf', 'getventure', params).then(updateData, handleFail);
     }
+    $scope.saveFunds = function saveFunds() {
+      // params.
+      const params = {id: $scope.venture.id, funds:[]};
+      _.each($scope.venture.funds, row => {
+        if (row.changed || !row.id) {
+          params.funds.push(row);
+        }
+      });
+      return crmStatus({}, crmApi('Pelf', 'updateventure', params).then(updateData, handleFail));
+    };
 
     //
     // Load data

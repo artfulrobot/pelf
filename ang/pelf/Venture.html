@@ -22,13 +22,13 @@
       </thead>
       <tbody>
         <tr ng-repeat="row in venture.funds" >
-          <td><input ng-model="row.amount"  /></td>
-          <td><select ng-model="row.fy_start" >
+          <td><input ng-model="row.amount" ng-change="recalculateTotals(row)" /></td>
+          <td><select ng-model="row.fy_start" ng-change="recalculateTotals(row)" >
               <option ng-repeat="(v, fy) in venture.fiscalYears" value="{{v}}" >{{fy}}</option>
               </select>
           </td>
           <td>
-            <select ng-model="row.project" >
+            <select ng-model="row.project" ng-change="recalculateTotals(row)">
               <option ng-repeat="project in projects" value="{{project.value}}" >{{project.label}}</option>
             </select>
           </td>
@@ -36,7 +36,15 @@
        </tbody>
     </table>
     <a href ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</a>
-
-    <pre>{{venture|json}}</pre>
+    <button ng-if="dirty" class="btn-primary" ng-click="saveFunds()" >Save changes</button>
+    <p>Total {{ (venture.worth_percent < 100 ? 'estimated' : '') }} worth £{{total}}</p>
+    By project:
+    <ul>
+      <li ng-repeat="row in projectTotals">£{{row.total}} {{row.name}}</li>
+    </ul>
+    By year:
+    <ul>
+      <li ng-repeat="row in yearTotals">£{{row.total}} {{row.name}}</li>
+    </ul>
   </div>
 </div>
