@@ -1,0 +1,42 @@
+<div class="crm-container">
+  <h1 crm-page-title>{{ pageTitle }}</h1>
+
+  <div class="messages" ng-if="state == 'loading'" >
+    Please wait...
+  </div>
+
+  <div ng-if="state == 'failed'" >
+    <div class="messages error" >{{error}}</div>
+  </div>
+
+  <div ng-if="state == 'loaded'" >
+    <!-- Create an editable list of funds. We do this as a big ugly form because it's just going to be quicker to use like that. -->
+
+    <table >
+      <thead>
+        <tr>
+          <th>Amount</th>
+          <th>Financial Year</th>
+          <th>Project</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="row in venture.funds" >
+          <td><input ng-model="row.amount"  /></td>
+          <td><select ng-model="row.fy_start" >
+              <option ng-repeat="(v, fy) in venture.fiscalYears" value="{{v}}" >{{fy}}</option>
+              </select>
+          </td>
+          <td>
+            <select ng-model="row.project" >
+              <option ng-repeat="project in projects" value="{{project.value}}" >{{project.label}}</option>
+            </select>
+          </td>
+        </tr>
+       </tbody>
+    </table>
+    <a href ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</a>
+
+    <pre>{{venture|json}}</pre>
+  </div>
+</div>

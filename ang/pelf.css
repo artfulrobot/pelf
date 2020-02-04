@@ -11,9 +11,11 @@ ul.pelf-browse__table li {
 article.pelf-browse__case-item {
   background: white;
   border-radius: 3px;
-  padding: 1rem;
   display: flex;
   flex-wrap: wrap;
+}
+article.pelf-browse__case-item>div {
+  padding: 1rem;
 }
 .pelf-browse__case-meta {
   flex: 1 0 7rem;
@@ -23,6 +25,7 @@ article.pelf-browse__case-item {
 }
 .pelf-browse__case-value {
   flex: 1 0 6rem;
+  text-align: right;
 }
 .pelf-browse__case-allocations {
   flex: 10 0 12rem;
@@ -38,6 +41,7 @@ article.pelf-browse__case-item h1 {
 }
 /** The little case fund allocations tables */
 #crm-container .pelf-browse__case-allocations table {
+  width: 100%;
   margin:0;
   border:none;
   font-size:0.75rem;
@@ -61,6 +65,13 @@ article.pelf-browse__case-item h1 {
 .pelf-browse__filter {
   flex: 1 0 auto;
   padding: 0.5rem;
+}
+.pelf-browse__case-items-option {
+  flex: 0 0 auto;
+  padding: 0.5rem;
+}
+.pelf-browse__filters.case-items {
+  justify-content: space-between;
 }
 /* Summary tables */
 table.pelf-financial {

@@ -21,6 +21,10 @@
         controller: 'PelfBrowse',
         templateUrl: '~/pelf/Browse.html',
       });
+      $routeProvider.when('/pelf/venture/:case_id', {
+        controller: 'PelfVenture',
+        templateUrl: '~/pelf/Venture.html',
+      });
     }
   );
 
@@ -37,6 +41,7 @@
     $scope.listDetails = 'activity';
     $scope.sortedCases = [];
     $scope.cases = {};
+    $scope.crmURL = CRM.url;
     $scope.filters = {
       sort: 'Status',
       projects: [],
@@ -114,7 +119,7 @@
     $scope.pelfMoney = function(amount, item) {
       if (!amount) return '';
       amount = adjustAmount(amount, item);
-      amount = (Math.round(amount/100) * 100).toString();
+      amount = (Math.round(amount/10) * 10).toString();
       return amount;
     };
     function adjustAmount(amount, item) {
@@ -125,9 +130,26 @@
       return Math.round(amount);
     };
 
+    // This is called when the data is loaded from CiviCRM.
     function updateData(r) {
       r = r.values;
       console.log("updateData", r);
+      const civiRoot = CRM.url('civicrm/a');
+      _.each(r.cases, venture => {
+        // Determine the Case Url.
+        //
+        // This is Civi's manage Case link:
+        venture.manageUrl = CRM.url('civicrm/contact/view/case', {
+          reset: 1,
+          id: venture.id,
+          cid: venture.clients[0], // First (probably only) client
+          action: 'view',
+          context: 'search',
+          selectedChild: 'case'
+        });
+
+        venture.ventureUrl = civiRoot + '#pelf/venture/' + venture.id;
+      });
       $scope.cases = r.cases;
       $scope.clients = r.clients;
       $scope.state = 'loaded';
@@ -148,7 +170,6 @@
 
       $scope.case_statuses = r.case_statuses;
       $scope.sorted_case_statuses= CRM._.sortBy(CRM._.values(r.case_statuses), s => parseInt(s.weight));
-      console.log({unsorted: r.case_statuses, sorted: $scope.sorted_case_statuses});
       $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
 
       $scope.pageTitle = 'Pelf: All Cases';

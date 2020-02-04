@@ -120,8 +120,8 @@
 
 
     <!-- ====================================== Listings ====================================== -->
-    <div class="pelf-browse__filters">
-      <div class="pelf-browse__filter">
+    <div class="pelf-browse__filters case-items">
+      <div class="pelf-browse__case-items-option">
         <label for="pelf-sort">Sort by</label>
         <select id="pelf-sort" ng-model="filters.sort" >
           <option value="Status">Status</option>
@@ -130,8 +130,8 @@
         </select>
 
       </div>
-      <div class="pelf-browse__filter">
-        Details:
+      <div class="pelf-browse__case-items-option">
+        Show:
         <span ng-class="(listDetails == 'financial') ? 'pelf-browse__details-selected' : 'pelf-browse__details-deselected' "
               ng-click="listDetails = 'financial'">Financial</span>
         <span ng-class="(listDetails == 'activity') ? 'pelf-browse__details-selected' : 'pelf-browse__details-deselected' "
@@ -140,24 +140,24 @@
     </div>
 
     <ul class="pelf-browse__table">
-      <li ng-repeat="case in sortedCases"
-          class="pelf-browse__case {{ case_statuses[case.status_id].grouping }}"
-          style="border-left: solid 4px {{case_statuses[case.status_id].color}}"
+      <li ng-repeat="venture in sortedCases"
+          class="pelf-browse__case {{ case_statuses[venture.status_id].grouping }}"
+          style="border-left: solid 4px {{case_statuses[venture.status_id].color}}"
           >
           <article class="pelf-browse__case-item">
             <div class="pelf-browse__case-meta">
-              {{ case_statuses[case.status_id].label }}
+              {{ case_statuses[venture.status_id].label }}
               <!-- todo: priority -->
             </div>
             <div class="pelf-browse__case-name">
-              <h1>{{ case.subject }}</h1>
-              <div ng-repeat="client_id in case.clients">
-                {{ clients[client_id].display_name }}
+              <h1><a href="{{ venture.ventureUrl }}" >{{ venture.subject }}</a></h1>
+              <div ng-repeat="client_id in venture.clients">
+                <a href="{{ crmURL('civicrm/contact/view', {cid: client_id, reset:1}) }}">{{ clients[client_id].display_name }}</a>
               </div>
             </div>
             <div class="pelf-browse__case-value">
-              <div>&pound;{{ pelfMoney(case.funds_total, case) }}</div><!-- @todo lookup local currency -->
-              <small>{{ case.worth_percent }}%</small>
+              <div>&pound;{{ pelfMoney(venture.funds_total, venture) }}</div><!-- @todo lookup local currency -->
+              <small>{{ venture.worth_percent }}%</small>
             </div>
 
             <div class="pelf-browse__case-allocations" ng-if="listDetails === 'financial'">
@@ -168,26 +168,26 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr ng-repeat="project_id in case.projects">
+                  <tr ng-repeat="project_id in venture.projects">
                     <td>{{projects[project_id].label}}</td>
-                    <td ng-repeat="fy in financial_years">{{ pelfMoney(case.funds[fy][project_id], case) }}</td>
+                    <td ng-repeat="fy in financial_years">{{ pelfMoney(venture.funds[fy][project_id], venture) }}</td>
                   </tr>
                 </tbody>
               </table>
             </div>
 
             <div class="pelf-browse__case-activities" ng-if="listDetails === 'activity'">
-              <div ng-if="case.activityLast">
-                Last: {{case.activityLast.activity_type}} {{case.activityLast.activity_date_time}}<br/>
-                <div>{{case.activityLast.subject}}</div>
-                <div><i class="crm-i">&#xf2bd;</i> {{case.activityLast.assigees}}</div>
+              <div ng-if="venture.activityLast">
+                Last: {{venture.activityLast.activity_type}} {{venture.activityLast.activity_date_time}}<br/>
+                <div>{{venture.activityLast.subject}}</div>
+                <div><i class="crm-i">&#xf2bd;</i> {{venture.activityLast.assigees}}</div>
               </div>
-              <div ng-if="case.activityNext">
-                Next: {{case.activityNext.activity_type}} {{case.activityNext.activity_date_time}}<br/>
-                <div>{{case.activityNext.subject}}</div>
-                <div><i class="crm-i">&#xf2bd;</i> {{case.activityNext.assigees}}</div>
+              <div ng-if="venture.activityNext">
+                Next: {{venture.activityNext.activity_type}} {{venture.activityNext.activity_date_time}}<br/>
+                <div>{{venture.activityNext.subject}}</div>
+                <div><i class="crm-i">&#xf2bd;</i> {{venture.activityNext.assigees}}</div>
               </div>
-              <div ng-if="!case.activityNext">
+              <div ng-if="!venture.activityNext">
                 Next: Nothing scheduled
               </div>
             </div>

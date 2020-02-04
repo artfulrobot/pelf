@@ -22,6 +22,10 @@ class CRM_Pelf {
   public $activity_type_option_group_id;
   /** I believe this is always a constant */
   public $activity_record_type_assignee = 1;
+  /**
+   * @var API name for pelf_worth_percent
+   */
+  public $worthPercentApiName;
   /** @var array from decoded pelf_config setting */
   protected $config;
   /**
@@ -37,6 +41,9 @@ class CRM_Pelf {
   public function __construct() {
     $this->case_stage_option_group_id = (int) civicrm_api3('OptionGroup', 'getvalue', ['return' => 'id', 'name'=>'case_status']);
     $this->activity_type_option_group_id = (int) civicrm_api3('OptionGroup', 'getvalue', ['return' => 'id', 'name'=>'activity_type']);
+    $customFieldID = CRM_Core_BAO_CustomField::getCustomFieldID('pelf_worth_percent', 'pelf_venture_details');
+    $this->worthPercentApiName = 'custom_' . $customFieldID;
+
     $this->getConfig();
   }
   /**
@@ -166,7 +173,7 @@ class CRM_Pelf {
       INNER JOIN civicrm_case_type ct ON cs.case_type_id = ct.id
       INNER JOIN civicrm_pelf_venture_details v ON cs.id = v.entity_id
       INNER JOIN civicrm_option_value stage ON cs.status_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
-      WHERE case_type_id IN ($allowed_case_types)";
+      WHERE case_type_id IN ($allowed_case_types) AND cs.is_deleted = 0";
     $dao = CRM_Core_DAO::executeQuery($sql);
     $cases = [];
     $used_case_statuses = [];
@@ -267,7 +274,7 @@ class CRM_Pelf {
 
         // Status pivot calcs.
         if (!isset($summary_pivot_status[$case['status_id']])) {
-          $summary_pivot_status[$case['status_id']] = ['total' => 0, 'adjusted' => 0];
+          $summary_pivot_status[$case['status_id']] = [];
         }
         $summary_pivot_status[$case['status_id']][$year]['total'] += $dao->amount;
         $summary_pivot_status[$case['status_id']][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
@@ -276,10 +283,10 @@ class CRM_Pelf {
         //$unique_projects[(int) $dao->project] = NULL;
       }
       // Merge in projects_by_case
-      foreach ($projects_by_case as $case_id => $projects) {
-        $projects = array_keys($projects);
-        sort($projects); // @todo by alphabet
-        $cases[$case_id]['projects'] = $projects;
+      foreach ($projects_by_case as $case_id => $case_projects) {
+        $case_projects = array_keys($case_projects);
+        sort($case_projects);
+        $cases[$case_id]['projects'] = $case_projects;
       }
     }
 
@@ -562,5 +569,34 @@ class CRM_Pelf {
       $sorted[] = ['key' => $k, 'data' => $v];
     }
     return $sorted;
+  }
+  /**
+   * Get fiscal years options.
+   */
+  public function getFiscalYearsOptions($mustInclude = []) {
+    $start = Civi::settings()->get('fiscalYearStart');
+    $start_month = str_pad($start['M'], 2, '0', STR_PAD_LEFT);
+    $start_day   = str_pad($start['d'], 2, '0', STR_PAD_LEFT);
+    $suffix = "-$start_month-$start_day";
+
+    // Get years from must includes.
+    $years = array_map(function($date) { return substr($date, 0, 4); }, $mustInclude);
+    sort($years);
+    $earliest = min(date('Y') - 10, reset($years));
+    $latest = max(date('Y') + 10, end($years));
+
+    $options = [];
+    for ($year = $earliest; $year <= $latest; $year++) {
+      $options["$year$suffix"] = ($suffix === '-01-01') ? $year : "$year - " . ($year+1);
+    }
+
+    // Add in any $mustInclude that had a different fiscal year start.
+    foreach ($mustInclude as $fy_start) {
+      if (!isset($options[$fy_start])) {
+        $options[$fy_start] = date('j M Y', strtotime($fy_start));
+      }
+    }
+
+    return $options;
   }
 }
