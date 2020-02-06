@@ -10,8 +10,10 @@
   </div>
 
   <div ng-if="state == 'loaded'" >
-    <!-- Create an editable list of funds. We do this as a big ugly form because it's just going to be quicker to use like that. -->
+    <pelf-pivot source-rows="venture.funds" projects="projects"></pelf-pivot>
 
+
+    <!-- Create an editable list of funds. We do this as a big ugly form because it's just going to be quicker to use like that. -->
     <table >
       <thead>
         <tr>
