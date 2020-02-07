@@ -2,29 +2,10 @@
   <p>{{ts('Example directive (pelf-pivot)')}}</p>
 
   <table>
-    <thead><tr>
-        <th></th>
-        <th ng-repeat="col in colHeads">{{col.label}}</th>
-        <th>Total</th>
-    </tr></thead>
     <tbody>
-      <tr ng-repeat="row in rowHeads">
-        <th>{{ row.label }}</th>
-        <td ng-repeat="col in colHeads">
-          {{ totals.groups[row.groupKey].groups[col.groupKey].total }}
-        </td>
-        <td>
-          {{ totals.groups[row.groupKey].total }}
-        </td>
-      </tr>
-      <tr>
-        <th>Total</th>
-        <td ng-repeat="col in colHeads">
-          {{ col.total }}
-        </td>
-        <td>
-          {{ totals.total }}
-        </td>
+      <tr ng-repeat="cells in htmlRows">
+        <th ng-repeat="th in cells.th">{{th.text}}</th>
+        <td ng-repeat="td in cells.td">{{td.text}}</td>
       </tr>
     </tbody>
 

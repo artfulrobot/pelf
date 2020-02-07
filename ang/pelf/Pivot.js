@@ -19,50 +19,147 @@
         const totals = {};
         var valueAccessor = row => parseFloat(row.amount), groups = [];
 
-        groups.push({ accessor: row => row.project, type: 'row', formatter: row => $scope.projects[row.project].label });
-        groups.push({ accessor: row => row.fy_start, type: 'column', formatter: row => row.fy_start });
-        // groups.push({ accessor: row => row.amount, type: 'value', formatter: row => row.amount });
-
+        var rowGroups = [
+          { accessor: row => $scope.projects[row.project].label.replace(/\s*:.*$/, '') },
+          { accessor: row => $scope.projects[row.project].label.replace(/^.*\s*:/, '') }
+        ];
+        var colGroups = [
+          { accessor: row => row.fy_start }
+        ];
         $scope.recalc = function recalc() {
 
-          const index = {groups: {}, total: 0};
-          const headers = {row: {}, column: {}};
-          _.forEach($scope.sourceRows, (row, rowIdx) => {
+          var t, ths;
+          const topThs = {subgroups: {}, total: 0};
+          const leftThs = {subgroups: {}, total: 0};
 
-            var t = index;
-            const rowValue = valueAccessor(row);
+          function addTotals(row, rowValue, g) {
+            // Add value to totals as we go down the groupings.
+            // This gives us a total per bigger group as well as the final total.
+            const groupKey = g.accessor(row);
+
+            if (!(groupKey in t.groups)) {
+              t.groups[groupKey] = {groups:{}, total: 0};
+            }
+            t = t.groups[groupKey];
             t.total += rowValue;
 
-            _.forEach(groups, g => {
-              const groupKey = g.accessor(row);
+            if (!(groupKey in ths.subgroups)) {
+              ths.subgroups[groupKey] = {subgroups: {}, total: 0};
+            }
+            ths = ths.subgroups[groupKey];
+            ths.total += rowValue;
+          }
 
-              if (!(groupKey in t.groups)) {
-                t.groups[groupKey] = {groups:{}, total: 0};
-              }
-              t = t.groups[groupKey];
+          const index = {groups: {}, total: 0};
 
-              // Accumulate the value
-              t.total += rowValue;
-
-              // Collect unique headers
-              if (!(groupKey in headers[g.type])) {
-                headers[g.type][groupKey] = {label: g.formatter(row), groupKey, total: rowValue};
-              }
-              else {
-                headers[g.type][groupKey].total += rowValue;
-              }
+          _.forEach($scope.sourceRows, (row, rowIdx) => {
+            t = index;
+            const rowValue = valueAccessor(row);
+            t.total += rowValue;
+            ths = leftThs;
+            _.forEach(rowGroups, g => {
+              // Add value to totals as we go down the groupings.
+              // This gives us a total per bigger group as well as the final total.
+              addTotals(row, rowValue, g);
+            });
+            ths = topThs;
+            _.forEach(colGroups, g => {
+              addTotals(row, rowValue, g);
             });
           });
+
+          console.log({index, topThs, leftThs});
+
+          // Sort the headers.
+          // Generate rows
+          $scope.htmlRows = [];
+
+          var leftTh = leftThs;
+          var topTh = topThs;
+          var maxDepth = 0;
+          t = index;
+
+          function processRowGroups(cells, depth) {
+
+            if (depth == 0) {
+              console.log(`${depth}: new row`);
+              cells = {th: [], td: []}
+            }
+            maxDepth = Math.max(maxDepth, depth);
+            // Loop all the groups
+            _.forEach(_.sortBy(_.keys(leftTh.subgroups)), groupKey => {
+              // 'climate'
+              // 'training'
+              cells.th.push({type:'th', text: groupKey});
+              console.log(`${depth}: added leftTh`,groupKey, JSON.stringify(cells.th));
+              // Descend into the data by this group
+              const lastDataPosition = t;
+              t = t.groups[groupKey];
+
+              // Does this group have any sub groups?
+              if (_.keys(leftTh.subgroups[groupKey].subgroups).length > 0) {
+                console.log(`${depth}: there are more ths to do:`, {leftTh});
+                const lastLeftTh = leftTh;
+                leftTh = leftTh.subgroups[groupKey];
+                processRowGroups(cells, depth + 1);
+                leftTh = lastLeftTh;
+              }
+              else {
+                console.log(`${depth}: there are no more leftThs to do, doing topThs`);
+                // Now add in data from columns
+                topTh = topThs;
+                processColumnGroups(cells);
+                // Completed a row
+                $scope.htmlRows.push(_.cloneDeep(cells));
+                console.log(`${depth}: completed a row ${JSON.stringify(cells)}`);
+                // Reset cells
+                cells.td = [];
+              }
+              t = lastDataPosition;
+              cells.th.pop();
+            });
+          }
+          function processColumnGroups(cells) {
+            _.forEach(_.sortBy(_.keys(topTh.subgroups)), groupKey => {
+              // Data cells
+              console.log("cat", {t,groupKey});
+
+              if (groupKey in t.groups) {
+                // We have a value
+                cells.td.push({type:'td', text: t.total});
+              }
+              else {
+                cells.td.push({type:'td', text: ''});
+              }
+             //// Repeat for sub keys
+             //if (_.keys(leftTh.subgroups).length > 0) {
+             //  processColumnGroups();
+             //}
+              // Now add in data from columns
+              //processColumnGroups();
+            });
+          }
+
+          processRowGroups([], 0);
+          // Create top header row.
+          const cells = {th: [], td: []};
+          while (maxDepth >= 0) {
+            cells.th.push({text: ''});
+            maxDepth--;
+          }
+          _.forEach(_.sortBy(_.keys(topThs.subgroups)), groupKey => { cells.th.push({text: groupKey}); });
+          $scope.htmlRows.unshift(cells);
+
+
           // Now we have structured data with totals.
 
           // Sort headers
-          $scope.rowHeads =_.sortBy(_.values(headers.row), 'label');
-          $scope.colHeads =_.sortBy(_.values(headers.column), 'label');
+          //$scope.rowHeads =_.sortBy(_.values(headers.row), 'label');
+          ////$scope.colHeads =_.sortBy(_.values(headers.column), 'label');
 
           $scope.totals = index; // @todo rename index?
 
         }
-
         $scope.recalc();
 
       }]
