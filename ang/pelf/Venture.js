@@ -43,23 +43,6 @@
         row.changed = true;
         $scope.dirty = true;
       }
-      $scope.total = 0;
-      const p = {}, y = {};
-      _.each($scope.venture.funds, row => {
-        const amount = parseFloat(row.amount);
-        $scope.total += amount;
-        p[row.project]  = (p[row.project]  || 0 ) + amount;
-        y[row.fy_start] = (y[row.fy_start] || 0 ) + amount;
-      });
-
-      $scope.projectTotals = [];
-      $scope.fiscalYearTotals = [];
-      $scope.projectTotals = _.map(_.sortBy(_.keys(p), projectValue => $scope.projects[projectValue].label),
-        projectValue => {
-          return {name: $scope.projects[projectValue].label, total: p[projectValue] };
-      });
-      $scope.yearTotals = _.map(_.sortBy(_.keys(y)),
-        year => { return {name: $scope.venture.fiscalYears[year], total: y[year] }; });
     };
 
     // Initial state is loading.

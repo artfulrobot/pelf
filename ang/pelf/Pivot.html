@@ -1,11 +1,17 @@
 <div>
-  <p>{{ts('Example directive (pelf-pivot)')}}</p>
-
   <table>
+    <thead>
+      <tr ng-repeat="row in thRows">
+        <th ng-repeat="th in row" colspan="{{th.span}}">{{th.formatted}}</th>
+      </tr>
+    </thead>
     <tbody>
-      <tr ng-repeat="cells in htmlRows">
-        <th ng-repeat="th in cells.th">{{th.text}}</th>
-        <td ng-repeat="td in cells.td">{{td.text}}</td>
+      <tr ng-repeat="row in tdRows">
+        <td ng-repeat="td in row track by $index" >
+          <div ng-if="td.project" ng-style="{ color: projects[td.project].color }" >{{td.formatted}}</div>
+          <div ng-if="!td.project && (td.type === 'value' || td.type === 'total')" style="text-align: right;">{{td.formatted}}</div>
+          <div ng-if="!td.project && !(td.type === 'value' || td.type === 'total')" >{{td.formatted}}</div>
+        </th>
       </tr>
     </tbody>
 
