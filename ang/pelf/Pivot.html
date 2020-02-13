@@ -7,7 +7,7 @@
     </thead>
     <tbody>
       <tr ng-repeat="row in tdRows">
-        <td ng-repeat="td in row track by $index" >
+        <td ng-repeat="td in row track by $index" rowspan="{{td.span || 1}}" >
           <div ng-if="td.project" ng-style="{ color: projects[td.project].color }" >{{td.formatted}}</div>
           <div ng-if="!td.project && (td.type === 'value' || td.type === 'total')" style="text-align: right;">{{td.formatted}}</div>
           <div ng-if="!td.project && !(td.type === 'value' || td.type === 'total')" >{{td.formatted}}</div>

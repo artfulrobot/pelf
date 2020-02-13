@@ -197,6 +197,8 @@ class GroupedData {
   }
   /**
    * The purpose of this is to get the headers at top or left.
+   *
+   * @deprecate this now that the flattened version include spans. @todo
    */
   getAllGroupKeys(rows) {
     // We know how many groups (e.g. rows if doing columns) we'll need
@@ -250,7 +252,7 @@ class GroupedData {
    * {
    *   type: 'data',
    *   ancestry: [groupKey, groupKey...],
-   *   cells: ['text', 'text', ...]
+   *   cells: [ {obj}, ... ]
    * }
    *
    */
@@ -266,12 +268,23 @@ class GroupedData {
       // Note the first level of childGroups are the first actual rows/cols.
       this.childGroups.forEach( subgroup => {
         group.ancestry.push(subgroup.groupKey);
-        // @todo provide opportunity to format the cell data
         const cell = {groupKey: subgroup.groupKey, span:1, groupDef: this.groupDef };
         cell.formatted = cell.groupDef.formatter(cell);
         group.cells.push(cell);
-        // recurse into the next level of group.
+        var l = items.length;
+        // recurse into the next level of group. This will duplicate our exiting cells.
         subgroup.getAllGroupKeysFlattened(items, group);
+        if (items.length - l > 1) {
+          // This item spans multiple cells.
+          // Set the span of the first item to the span:
+          items[l].cells[this.depth].span = items.length - l;
+          //console.log(`at depth ${this.depth}, item: ${items[l].cells.map(c => c.ancestry.join(','))} span: ${items.length - l}`);
+          // Erase others.
+          for (var i=l+1; i<items.length; i++) {
+            items[i].cells.splice([this.depth], 1);
+          }
+        }
+        console.log(`Setting item ${l} first cell to span ${items.length - l}`);
         // By the time we are here, our group and all its children have been added to items.
         // So we now clean up a bit.
         group.ancestry.pop();
@@ -300,7 +313,7 @@ class GroupedData {
   }
   copyGroup(group) {
     const copy = {
-      cells: group.cells.slice(), // xxx this might not work any more since it's an obj now @todo
+      cells: group.cells.map(cell => Object.assign({}, cell)),
       ancestry: group.ancestry.slice(),
     };
     if (group.isTotal) { copy.isTotal = true; }
@@ -433,6 +446,8 @@ class Pivot {
   getRows() {
     var rowGroups = this.rowGroups.getAllGroupKeysFlattened();
     var colGroups = this.colGroups.getAllGroupKeysFlattened();
+    console.log("rowGroups", colGroups);
+    console.log("rowGroups", rowGroups);
     var trs = [];
     var colIdx = 0;
     var rowIdx = 0;
