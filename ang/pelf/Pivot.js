@@ -34,7 +34,6 @@ class ObjectWithOrderedKeys {
     if (this.has(prop)) {
       //this.list = this.list.filter(p => { console.log({p, prop, cmp: p!=prop}); return p != prop; });
       this.list = this.list.filter(p => p != prop );
-      console.log("after remove: ", JSON.stringify(this.list));
       delete this[prop];
     }
   }
@@ -196,56 +195,6 @@ class GroupedData {
     }
   }
   /**
-   * The purpose of this is to get the headers at top or left.
-   *
-   * @deprecate this now that the flattened version include spans. @todo
-   */
-  getAllGroupKeys(rows) {
-    // We know how many groups (e.g. rows if doing columns) we'll need
-    // Create an array of empty objects for this.
-    if (!rows) {
-      rows = this.groupDefs.map(x => ([]));
-    }
-    var i;
-
-    var groupItemsCount = this.childGroups.count();
-    if (groupItemsCount) {
-      groupItemsCount = 0;
-      // start of a new group, we need to loop the items in this group
-      // to produce cells at depth d
-      this.childGroups.forEach( groupItem => {
-        const th = {groupKey: groupItem.groupKey, span:1, groupDef: this.groupDef };
-        th.formatted = th.groupDef.formatter(th);
-        // now collect items for the row beneath this one.
-        th.span = groupItem.getAllGroupKeys(rows);
-        // our groupItemsCount has to grow because of the child's
-        groupItemsCount += th.span;
-        rows[this.depth].push(th);
-      });
-      if (this.groupDef.total) {
-        // console.log("Adding a total from", this.depth);
-        // We have completed this group and need to add a total.
-        // This total represents the sum of all this group's items' values.
-        // It takes another cell alongside our groupItems.
-        const th = {groupKey: this.groupKey, span:1, type: 'total', groupDef: this.groupDef };
-        th.formatted = th.groupDef.formatter(th);
-        rows[this.depth].push(th);
-        // If we're adding a total item we need to add blanks to all
-        // rows below this.
-        for (i=rows.length - 1; i > this.depth; i--) {
-          rows[i].push({groupKey: ''});
-        }
-        groupItemsCount++;
-      }
-    }
-    else {
-      // else: if there are no items in this group, we're at the deepest level, where
-      // the data would be. We return a count of 1 for the size of the header.
-      groupItemsCount = 1;
-    }
-    return (this.depth > 0) ? groupItemsCount : rows;
-  }
-  /**
    * Returns an object representing a row or a column, with metadata
    * about that group and the header cells.
    *
@@ -256,7 +205,8 @@ class GroupedData {
    * }
    *
    */
-  getAllGroupKeysFlattened(items, group) {
+  getAllGroupKeysFlattened(mode, items, group) {
+    mode = mode || 'rows';
     if (!group) {
       // Top level group.
       group = {ancestry: [], cells: []};
@@ -273,7 +223,7 @@ class GroupedData {
         group.cells.push(cell);
         var l = items.length;
         // recurse into the next level of group. This will duplicate our exiting cells.
-        subgroup.getAllGroupKeysFlattened(items, group);
+        subgroup.getAllGroupKeysFlattened(mode, items, group);
         if (items.length - l > 1) {
           // This item spans multiple cells.
           // Set the span of the first item to the span:
@@ -281,10 +231,14 @@ class GroupedData {
           //console.log(`at depth ${this.depth}, item: ${items[l].cells.map(c => c.ancestry.join(','))} span: ${items.length - l}`);
           // Erase others.
           for (var i=l+1; i<items.length; i++) {
-            items[i].cells.splice([this.depth], 1);
+            if (mode === 'rows') {
+              items[i].cells.splice([this.depth], 1);
+            }
+            else if (mode === 'columns') {
+              delete items[i].cells[this.depth];
+            }
           }
         }
-        console.log(`Setting item ${l} first cell to span ${items.length - l}`);
         // By the time we are here, our group and all its children have been added to items.
         // So we now clean up a bit.
         group.ancestry.pop();
@@ -355,7 +309,6 @@ class Pivot {
   }
 
   defaultFormatter(th) {
-    console.log('formatter', th);
     return ((th.type === 'total') ? 'Total ' : '') + (th.groupKey || '');
   }
 
@@ -411,13 +364,13 @@ class Pivot {
     var html = '<table><thead>'
     thRows.forEach(row => {
       html += '<tr>';
-      row.forEach(td => { html += `<td colspan="${td.span}">${td.groupKey ?? ''}</td>`; });
+      row.forEach(td => { html += `<td colspan="${td.span}">${td.formatted ?? ''}</th>`; });
       html += '</tr>';
     });
     html += '</thead><tbody>';
     this.getRows().forEach(row => {
       html += '<tr>';
-      row.forEach(td => { html += `<td>${td}</td>`; });
+      row.forEach(td => { html += `<td>${td.formatted}</td>`; });
       html += '</tr>';
     });
     html += '</tbody><table>';
@@ -435,19 +388,27 @@ class Pivot {
    *
    */
   getColHeaders() {
-    return this.colGroups.getAllGroupKeys().map(row => {
-      row.unshift({span: this.rowGroupDefs.length});
-      return row;
-    });
+    var colGroups = this.colGroups.getAllGroupKeysFlattened('columns');
+    const trs = [];
+    for (var i=0; i<this.colGroupDefs.length; i++) {
+      // start a row by leaving space for the left header columns.
+      trs.push([{span: this.rowGroupDefs.length, formatted:''}]);
+      colGroups.forEach(colGroup => {
+        if (i in colGroup.cells) {
+          trs[i].push(colGroup.cells[i]);
+        }
+      });
+    }
+    return trs;
   }
 
   /**
+   * Get table cells for all rows.
    */
   getRows() {
-    var rowGroups = this.rowGroups.getAllGroupKeysFlattened();
-    var colGroups = this.colGroups.getAllGroupKeysFlattened();
-    console.log("rowGroups", colGroups);
-    console.log("rowGroups", rowGroups);
+    var rowGroups = this.rowGroups.getAllGroupKeysFlattened('rows');
+    var colGroups = this.colGroups.getAllGroupKeysFlattened('columns');
+    // console.log("colGroups", colGroups); console.log("rowGroups", rowGroups);
     var trs = [];
     var colIdx = 0;
     var rowIdx = 0;
@@ -455,7 +416,6 @@ class Pivot {
     const myData = {};
 
     rowGroups.forEach((rowGroup, rowGroupIndex) => {
-      console.log(rowGroup);
       // copy headers
       const cells = rowGroup.cells;
 
