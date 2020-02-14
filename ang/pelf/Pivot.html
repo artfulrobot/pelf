@@ -1,5 +1,5 @@
 <div>
-  <table>
+  <table class="{{tableClass}}">
     <thead>
       <tr ng-repeat="row in thRows">
         <th ng-repeat="th in row" colspan="{{th.span}}">{{th.formatted}}</th>
@@ -7,10 +7,14 @@
     </thead>
     <tbody>
       <tr ng-repeat="row in tdRows">
-        <td ng-repeat="td in row track by $index" rowspan="{{td.span || 1}}" >
-          <div ng-if="td.project" ng-style="{ color: projects[td.project].color }" >{{td.formatted}}</div>
-          <div ng-if="!td.project && (td.type === 'value' || td.type === 'total')" style="text-align: right;">{{td.formatted}}</div>
-          <div ng-if="!td.project && !(td.type === 'value' || td.type === 'total')" >{{td.formatted}}</div>
+        <td ng-repeat="td in row track by $index" rowspan="{{td.span || 1}}" ng-class="td.cellClasses">
+          <div ng-if="td.isHeader && td.status"
+               ng-style="{ borderLeft: 'solid 4px ' + td.status.color }"
+               class="pelf-status-label"
+               >{{td.formatted}}</div>
+          <div ng-if="td.isHeader && td.project" class="project header" ng-style="{ color: projects[td.project].color }" >{{td.formatted}}</div>
+          <div ng-if="td.isHeader && !(td.status || td.project)" class="header">{{td.formatted}}</div>
+          <div ng-if="!td.isHeader" style="text-align: right;" ng-class="[ td.type, 'data']">{{td.formatted}}</div>
         </th>
       </tr>
     </tbody>

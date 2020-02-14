@@ -77,6 +77,9 @@ article.pelf-browse__case-item h1 {
 table.pelf-financial {
   background: white;
 }
+table.pelf-financial.by-status td {
+    padding:0 !important;
+}
 td.pelf-financial__no-padding
 {
   padding:0 !important;
