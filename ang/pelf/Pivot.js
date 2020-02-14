@@ -290,6 +290,7 @@ class Pivot {
     this.rowGroupDefs = this.checkGroupDefs(options.rowGroupDefs);
     this.colGroupDefs = this.checkGroupDefs(options.colGroupDefs);
     this.valueAccessor = options.valueAccessor;
+    this.valueFormatter = options.valueFormatter || ((cell) => cell.value);
     this.groupedData = new GroupedData(this.rowGroupDefs.concat(this.colGroupDefs));
     this.rowGroups = new GroupedData(this.rowGroupDefs);
     this.colGroups = new GroupedData(this.colGroupDefs);
@@ -443,6 +444,7 @@ class Pivot {
     rowGroups.forEach((rowGroup, rowGroupIndex) => {
       // copy headers
       const cells = rowGroup.cells.map(cell => { cell.isHeader = true; cell.isRowHeader = true; return cell; });
+      var cell;
 
       if (!rowGroup.isTotal) {
         // Normal row of data
@@ -457,11 +459,11 @@ class Pivot {
             // Sum amounts from data rows
             if (rows) {
               var a = rows.reduce((a, v) => a + this.valueAccessor(v), 0);
-              cells.push({formatted: a, type: 'value'});
+              cell = {type: 'value', value: a};
               myData[rowGroupIndex][colGroupIndex] = a;
             }
             else {
-              cells.push({type: 'value', formatted: ''});
+              cell = {type: 'value', value: ''};
               myData[rowGroupIndex][colGroupIndex] = 0;
             }
           }
@@ -480,9 +482,12 @@ class Pivot {
             }
             // Store the total too.
             myData[rowGroupIndex][colGroupIndex] = t;
-            cells.push({formatted: t, type: 'total'});
+            cell = {type: 'total', value: t};
           }
-          // End of a cell.
+          // Allow reformatting of cell. This function MUST output a string value,
+          // and MAY alter or add other properties on the cell.
+          cell.formatted = this.valueFormatter(cell);
+          cells.push(cell);
         });
       }
       else {
@@ -500,7 +505,11 @@ class Pivot {
           }
           if (!(rowGroupIndex in myData)) { myData[rowGroupIndex] = {}; }
           myData[rowGroupIndex][colGroupIndex] = t;
-          cells.push({formatted: t, type: 'total'});
+          cell = {type: 'total', value: t}
+          // Allow reformatting of cell. This function MUST output a string value,
+          // and MAY alter or add other properties on the cell.
+          cell.formatted = this.valueFormatter(cell);
+          cells.push(cell);
         });
       }
       // Store the row.
@@ -511,6 +520,15 @@ class Pivot {
   }
 
 }
+
+  // See https://stackoverflow.com/questions/60230219/how-to-output-an-array-of-different-elements-in-a-sequence-using-angularjs/60231437#60231437
+  angular.module('pelf').directive('pelfRepeatSection', function() {
+    return {
+      restrict: 'A',
+      replace: true,
+      link(scope, el) { el.remove(); }
+    };
+  });
   // "pelfPivot" is a directive.
   angular.module('pelf').directive('pelfPivot', function() {
     return {
@@ -532,11 +550,10 @@ class Pivot {
         $scope.$watch('showAdjusted', function(newValue) { $scope.recalc(); });
       },
       controller: ['$scope', function pelfPivot($scope) {
-        console.log("case stats", $scope.caseStatuses);
-
         var rowIsValid = row => (row.project && row.fy_start && row.amount);
 
         const tsTotal = ts('Total') + ' ';
+
         const projectFormatter = (th) => {
           if (th.groupKey) {
             // Get project value
@@ -544,6 +561,16 @@ class Pivot {
             return ((th.type === 'total') ? tsTotal : '') + th.groupKey;
           }
           return ((th.type === 'total') ? tsTotal : '');
+        };
+
+        const fyFormatter = (th) => {
+          const y = parseInt(th.groupKey.substr(0, 4));
+          if (th.groupKey.substr(-5) === '01-01') {
+            return y;
+          }
+          else {
+            return `${y}-${y+1}`;
+          }
         };
 
         $scope.recalc = function recalc() {
@@ -555,6 +582,9 @@ class Pivot {
           else {
             pivotConfig.valueAccessor = row => parseFloat(row.amount);
           }
+          // We need the max value in our data.
+          // var maxValue = this.sourceRows.reduce((a, v) => {console.log("Considering", pivotConfig.valueAccessor(v)); return Math.max(a, pivotConfig.valueAccessor(v));}, 0);
+          var maxValue = 0;
 
           if ($scope.pivotType === 'full') {
 
@@ -567,7 +597,7 @@ class Pivot {
               { name: 'Project detail', accessor: row => $scope.projects[row.project].label.replace(/^.*\s*:/, ''), total: true },
             ];
             pivotConfig.colGroupDefs = [
-              { name: 'Year', accessor: row => row.fy_start, total: true }
+              { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
             ];
 
           }
@@ -586,17 +616,27 @@ class Pivot {
               }
             ];
             pivotConfig.colGroupDefs = [
-              { name: 'Year', accessor: row => row.fy_start, total: true }
+              { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
             ];
 
           }
 
+          pivotConfig.valueFormatter = cell => {
+            // Use this loop to determine the max value
+            maxValue = Math.max(maxValue, cell.value);
+            return Math.round(cell.value).toLocaleString();
+          };
 
           console.log("recalc", pivotConfig);
           var p = new Pivot(pivotConfig);
           p.setSource(this.sourceRows);
           $scope.thRows = p.getColHeaders();
           $scope.tdRows = p.getRows();
+
+          // Calc maxValue in the table.
+          //$scope.maxValue = $scope.tdRows.reduce((a, row) => row.reduce((a, cell) => cell.isHeader ? a : Math.max(a, cell.value),0), 0);
+          console.warn("maxValue", maxValue);
+          $scope.maxValue = maxValue;
         }
         $scope.recalc();
 
