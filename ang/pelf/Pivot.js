@@ -538,7 +538,7 @@ class Pivot {
 
 
           var p = new Pivot(pivotConfig);
-          p.setSource(this.sourceRows.filter(rowIsValid));
+          console.log("setting source to ", this.sourceRows);
           $scope.thRows = p.getColHeaders();
           $scope.tdRows = p.getRows();
         }

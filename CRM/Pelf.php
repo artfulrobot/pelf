@@ -197,6 +197,102 @@ class CRM_Pelf {
       ->execute()
       ->indexBy('value');
 
+    if ($cases) {
+
+      // Fetch all clients for these cases
+      $clients_linked = CRM_Core_DAO::executeQuery(
+        "SELECT contact_id, case_id FROM civicrm_case_contact WHERE case_id IN ($case_ids_sql)"
+        )->fetchAll();
+      $clients = [];
+      foreach ($clients_linked as $row) {
+        $client_contact_id = (int) $row['contact_id'];
+        $case_id = (int) $row['case_id'];
+        $clients[$client_contact_id] = NULL;
+        $cases[$case_id]['clients'][] = $client_contact_id;
+      }
+      // Fetch client data
+      $result = \Civi\Api4\Contact::get()
+        ->setSelect(['id', 'display_name'])
+        ->addWhere('id', 'IN', array_keys($clients))
+        ->execute();
+      foreach ($result as $client) {
+        $clients[$client['id']] = $client;
+      }
+
+      // Fetch last completed activity and first scheduled one.
+      $this->addNearActivities($cases);
+
+      $financial_years = $this->addFundAllocations($cases);
+    }
+
+    // Fetch all case statuses.
+    $case_statuses = Civi\Api4\OptionValue::get()
+      ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
+      ->addWhere('option_group.name', '=', 'case_status')
+      ->addWhere('value', 'IN', array_keys($used_case_statuses))
+      ->addWhere('is_active', '=', '1')
+      ->execute()
+      ->indexBy('value');
+
+    return [
+      'clients'         => $clients,
+      'caseTypes'       => $this->caseTypes,
+      'cases'           => $cases,
+      'case_statuses'   => $case_statuses,
+      'projects'        => $projects,
+      'financial_years' => $financial_years,
+      'totals'          => $totals,
+    ];
+  }
+  /**
+   * Get data for browsing.
+   *
+   */
+  public function xgetBrowseData($filters = []) {
+
+    $sql = '';
+    $params = [];
+
+    // Limit by a particular case type?
+    $allowed_case_types = array_keys($this->caseTypes);
+    if ($filters['case_type_id']) {
+      $case_type_id = (int) $filters['case_type_id'];
+      if ($case_type_id > 0) {
+        $allowed_case_types = [$case_type_id];
+      }
+    }
+
+    // Fetch cases
+    $allowed_case_types = implode(',', $allowed_case_types);
+    $sql = "SELECT cs.id, ct.name, cs.subject, v.worth_percent, status_id, stage.label status_label, cs.case_type_id
+      FROM civicrm_case cs
+      INNER JOIN civicrm_case_type ct ON cs.case_type_id = ct.id
+      INNER JOIN civicrm_pelf_venture_details v ON cs.id = v.entity_id
+      INNER JOIN civicrm_option_value stage ON cs.status_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
+      WHERE case_type_id IN ($allowed_case_types) AND cs.is_deleted = 0";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $cases = [];
+    $used_case_statuses = [];
+    while ($dao->fetch()) {
+      $id = (int) $dao->id;
+      $cases[$id] = $dao->toArray() + ['funds_total' => 0];
+      // Ensure worth_percent is a float.
+      $cases[$id]['worth_percent'] = (float) $dao->worth_percent;
+      // $cases[$id]['projects'] = [];
+      $used_case_statuses[$dao->status_id] = TRUE;
+    }
+
+    $case_ids_sql = implode(',', array_keys($cases));
+
+    // Fetch all projects.
+    $projects = Civi\Api4\OptionValue::get()
+      ->setSelect(['value', 'label', 'color', 'grouping'])
+      ->addWhere('option_group.name', '=', 'pelf_project')
+      ->addWhere('is_active', '=', 1)
+      ->addOrderBy('label')
+      ->execute()
+      ->indexBy('value');
+
     $summary_pivot_project_empty = [];
     foreach ($projects as $project) {
       preg_match('/^(.*?)\s*:\s*(.*)$/', $project['label'], $_);
@@ -413,6 +509,25 @@ class CRM_Pelf {
     while ($results->fetch()) {
       $cases[$results->case_id]['activityNext'] = $results->toArray();
     }
+  }
+  /**
+   * Adds info into each cases's 'funds' key, and returns unique financial_years
+   *
+   * @pram array &$cases
+   *
+   * @return list of unique financial years.
+   */
+  protected function addFundAllocations(&$cases) {
+    $case_ids_sql = implode(',', array_keys($cases));
+    // I'm not sure whether the ORDER BY is helpful. It's not necessary.
+    $sql = "SELECT * FROM civicrm_pelf_funds_allocation WHERE case_id IN ($case_ids_sql) ORDER BY case_id, project, fy_start";
+    $dao = CRM_Core_DAO::executeQuery($sql);
+    $financial_years = [];
+    while ($dao->fetch()) {
+      $financial_years[$dao->fy_start] = TRUE;
+      $cases[$dao->case_id]['funds'][] = $dao->toArray();
+    }
+    return array_keys($financial_years);
   }
   /**
    * Create the case status.

@@ -57,11 +57,11 @@
     $scope.pageTitle = 'Pelf: All Cases';
     $scope.$watch('filters', applySortAndFilter, true);
     $scope.totals = { adjusted: 0, total: 0 };
+    $scope.filteredFunds = [];
 
     function applySortAndFilter() {
       $scope.sortedCases = [];
-      // Recalculate pivots
-      const pivots = {};
+      var fundAllocations = [];
       if (!$scope.cases) {
         return;
       }
@@ -71,8 +71,6 @@
         }
         var item = $scope.cases[key];
         var anyMatch = false;
-
-        // Loop funds.
 
         // Determine if this case matches our filters.
 
@@ -97,7 +95,13 @@
         }
 
         $scope.sortedCases.push($scope.cases[key]);
+
+        // Collect fund allocation records.
+        if (item.funds) {
+          fundAllocations = fundAllocations.concat(item.funds);
+        }
       }
+      $scope.filteredFunds = fundAllocations;
 
       if ($scope.filters.sort == 'Status') {
         $scope.sortedCases.sort((a, b) => {
