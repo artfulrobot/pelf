@@ -82,14 +82,18 @@
         }
         // Project match?
         if ($scope.filters.projects.length > 0) {
-          if (!$scope.filters.projects.some(proj => item.projects.indexOf(parseInt(proj))>-1 )) {
+          if (!$scope.filters.projects.some(proj => item.funds && item.funds.some(row => row.project == proj))) {
             continue;
           }
         }
 
         // Year match?
         if ($scope.filters.years.length > 0) {
-          if (!$scope.filters.years.some((year) => year in item.funds)) {
+
+          if (!item.funds) {
+            continue;
+          }
+          if (!$scope.filters.years.some((year) => year in item.funds.map(row => row.fy_start))) {
             continue;
           }
         }
@@ -98,6 +102,11 @@
 
         // Collect fund allocation records.
         if (item.funds) {
+          // @todo if ($scope.filters.years.length > 0) {
+          //   if (!$scope.filters.years.some((year) => year in item.funds.map(row => row.fy_start))) {
+          //     continue;
+          //   }
+          // }
           fundAllocations = fundAllocations.concat(item.funds);
         }
       }

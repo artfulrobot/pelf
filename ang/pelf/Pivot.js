@@ -486,6 +486,8 @@ class Pivot {
           }
           // Allow reformatting of cell. This function MUST output a string value,
           // and MAY alter or add other properties on the cell.
+          cell.colGroup = colGroup;
+          cell.rowGroup = rowGroup;
           cell.formatted = this.valueFormatter(cell);
           cells.push(cell);
         });
@@ -505,7 +507,7 @@ class Pivot {
           }
           if (!(rowGroupIndex in myData)) { myData[rowGroupIndex] = {}; }
           myData[rowGroupIndex][colGroupIndex] = t;
-          cell = {type: 'total', value: t}
+          cell = {type: 'total', value: t, rowGroup, colGroup};
           // Allow reformatting of cell. This function MUST output a string value,
           // and MAY alter or add other properties on the cell.
           cell.formatted = this.valueFormatter(cell);
@@ -586,6 +588,12 @@ class Pivot {
           // var maxValue = this.sourceRows.reduce((a, v) => {console.log("Considering", pivotConfig.valueAccessor(v)); return Math.max(a, pivotConfig.valueAccessor(v));}, 0);
           var maxValue = 0;
 
+          pivotConfig.valueFormatter = cell => {
+            // Use this loop to determine the max value
+            maxValue = Math.max(maxValue, cell.value);
+            return Math.round(cell.value).toLocaleString();
+          };
+
           if ($scope.pivotType === 'full') {
 
             pivotConfig.rowGroupDefs = [
@@ -619,13 +627,18 @@ class Pivot {
               { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
             ];
 
+            // Special
+            pivotConfig.valueFormatter = cell => {
+              // Use this loop to determine the max value
+              maxValue = Math.max(maxValue, cell.value);
+              if (cell.rowGroup.cells[0] && cell.rowGroup.cells[0].status) {
+                cell.barColour = cell.rowGroup.cells[0].status.color;
+              }
+              return Math.round(cell.value).toLocaleString();
+            };
+
           }
 
-          pivotConfig.valueFormatter = cell => {
-            // Use this loop to determine the max value
-            maxValue = Math.max(maxValue, cell.value);
-            return Math.round(cell.value).toLocaleString();
-          };
 
           console.log("recalc", pivotConfig);
           var p = new Pivot(pivotConfig);

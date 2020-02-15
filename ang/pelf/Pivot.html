@@ -24,10 +24,11 @@
                  ng-if="maxValue > 0"
                  ng-style="{ width: cell.value/maxValue*100 + '%',
                              left: (50 - cell.value/maxValue*50) + '%',
-                             backgroundColor: row.color,
+                             backgroundColor: cell.barColour,
                              opacity: 0.5
                              }"></div>
             <div class="pelf-bg-barchart__text pelf-money" >
+              <!--<pre>{{cell|json}}</pre>-->
               {{cell.formatted}}
             </div>
           </div>

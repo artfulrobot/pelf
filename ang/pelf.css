@@ -77,13 +77,16 @@ article.pelf-browse__case-item h1 {
 table.pelf-financial {
   background: white;
 }
-table.pelf-financial.by-status td,
-table.pelf-financial.by-status th {
-    padding:0 !important;
+#crm-container table.pelf-financial tbody td,
+#crm-container table.pelf-financial tbody th {
+    padding:0;
 }
-td.pelf-financial__no-padding
-{
-  padding:0 !important;
+#crm-container table.pelf-financial thead th,
+#crm-container table.pelf-financial div.header {
+  padding: 0 0.5rem;
+}
+#crm-container td.pelf-financial__no-padding {
+  padding:0;
 }
 table.pelf-financial div.data {
   text-align: right;
