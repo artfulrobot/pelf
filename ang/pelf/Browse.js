@@ -28,10 +28,6 @@
     }
   );
 
-  // The controller uses *injection*. This default injects a few things:
-  //   $scope -- This is the set of variables shared between JS and HTML.
-  //   crmApi, crmStatus, crmUiHelp -- These are services provided by civicrm-core.
-  //   myContact -- The current contact, defined above in config().
   angular.module('pelf').controller('PelfBrowse', function($scope, crmApi, crmStatus, crmUiHelp, $routeParams) {
     // The ts() and hs() functions help load strings for this module.
     var ts = $scope.ts = CRM.ts('pelf');
@@ -59,12 +55,22 @@
     $scope.totals = { adjusted: 0, total: 0 };
     $scope.filteredFunds = [];
 
+    /**
+     * Recreates sortedCases and filteredFunds arrays according to the user
+     * selections.
+     */
     function applySortAndFilter() {
       $scope.sortedCases = [];
       var fundAllocations = [];
       if (!$scope.cases) {
         return;
       }
+
+      const needToFilterOnStatus = $scope.filters.status.length > 0;
+      const needToFilterOnYears = $scope.filters.years.length > 0;
+      const needToFilterOnProjects = $scope.filters.projects.length > 0;
+      const { status: statusValues, years: yearValues, projects: projectValues } = $scope.filters;
+
       for (const key in $scope.cases) {
         if (!$scope.cases.hasOwnProperty(key)) {
           continue;
@@ -72,43 +78,41 @@
         var item = $scope.cases[key];
         var anyMatch = false;
 
-        // Determine if this case matches our filters.
+        // Determine if this *case* matches our filters.
 
         // Status match?
-        if ($scope.filters.status.length > 0) {
-          if ($scope.filters.status.indexOf(item.status_id.toString()) == -1) {
-            continue;
-          }
-        }
-        // Project match?
-        if ($scope.filters.projects.length > 0) {
-          if (!$scope.filters.projects.some(proj => item.funds && item.funds.some(row => row.project == proj))) {
-            continue;
-          }
+        if (needToFilterOnStatus && statusValues.indexOf(item.status_id.toString()) == -1) {
+          // No.
+          continue;
         }
 
-        // Year match?
-        if ($scope.filters.years.length > 0) {
+        // Project and year matches work on the fundAllocations
+        // For selecting cases, we only need a single fund allocation to match
+        // to allow the case through.
+        // For selecting funds, we filter out all other things that don't match.
 
-          if (!item.funds) {
-            continue;
+        var projectAndYearMatches = !(needToFilterOnProjects || needToFilterOnYears);
+        (item.funds || []).forEach(row => {
+
+          // Ignore rows that do not match.
+          if (needToFilterOnProjects && projectValues.indexOf(row.project) === -1) {
+            return;
           }
-          if (!$scope.filters.years.some((year) => year in item.funds.map(row => row.fy_start))) {
-            continue;
+          if (needToFilterOnYears && yearValues.indexOf(row.fy_start) === -1) {
+            return;
           }
+
+          // This row matches.
+          projectAndYearMatches = true;
+          fundAllocations.push(row);
+        });
+        if (!projectAndYearMatches) {
+          // Discard a case that does not have any fundAllocations matching
+          // on required project/year values.
+          continue;
         }
 
         $scope.sortedCases.push($scope.cases[key]);
-
-        // Collect fund allocation records.
-        if (item.funds) {
-          // @todo if ($scope.filters.years.length > 0) {
-          //   if (!$scope.filters.years.some((year) => year in item.funds.map(row => row.fy_start))) {
-          //     continue;
-          //   }
-          // }
-          fundAllocations = fundAllocations.concat(item.funds);
-        }
       }
       $scope.filteredFunds = fundAllocations;
 
@@ -160,7 +164,6 @@
           context: 'search',
           selectedChild: 'case'
         });
-
         venture.ventureUrl = civiRoot + '#pelf/venture/' + venture.id;
       });
       $scope.cases = r.cases;

@@ -213,7 +213,8 @@ class GroupedData {
       items = [];
     }
 
-    if (this.childGroups.count()) {
+    const childGroupsCount = this.childGroups.count();
+    if (childGroupsCount) {
       // We have not yet processed all our groups.
       // Note the first level of childGroups are the first actual rows/cols.
       this.childGroups.forEach( subgroup => {
@@ -245,7 +246,8 @@ class GroupedData {
         group.cells.pop();
       });
       // We've completed a row/column group. Should we insert a total row/col?
-      if (this.groupDef.total) {
+      // (Do not add a total row if we are the only group).
+      if (this.groupDef.total && childGroupsCount > 1) {
         var n = this.groupDefs.length - group.cells.length;
         // We need cells to be padded to the length of the number of group defs
         group.cells.push({formatted: 'Total'}); // @todo use span instead @todo ts()
@@ -261,7 +263,6 @@ class GroupedData {
     else {
       // We're the last group, so the last header.
       items.push(this.copyGroup(group));
-      //console.warn("Added item" + JSON.stringify(items));
     }
     return items;
   }
@@ -645,10 +646,6 @@ class Pivot {
           p.setSource(this.sourceRows);
           $scope.thRows = p.getColHeaders();
           $scope.tdRows = p.getRows();
-
-          // Calc maxValue in the table.
-          //$scope.maxValue = $scope.tdRows.reduce((a, row) => row.reduce((a, cell) => cell.isHeader ? a : Math.max(a, cell.value),0), 0);
-          console.warn("maxValue", maxValue);
           $scope.maxValue = maxValue;
         }
         $scope.recalc();
