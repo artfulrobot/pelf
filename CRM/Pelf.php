@@ -244,194 +244,6 @@ class CRM_Pelf {
       'totals'          => $totals,
     ];
   }
-  /**
-   * Get data for browsing.
-   *
-   */
-  public function xgetBrowseData($filters = []) {
-
-    $sql = '';
-    $params = [];
-
-    // Limit by a particular case type?
-    $allowed_case_types = array_keys($this->caseTypes);
-    if ($filters['case_type_id']) {
-      $case_type_id = (int) $filters['case_type_id'];
-      if ($case_type_id > 0) {
-        $allowed_case_types = [$case_type_id];
-      }
-    }
-
-    // Fetch cases
-    $allowed_case_types = implode(',', $allowed_case_types);
-    $sql = "SELECT cs.id, ct.name, cs.subject, v.worth_percent, status_id, stage.label status_label, cs.case_type_id
-      FROM civicrm_case cs
-      INNER JOIN civicrm_case_type ct ON cs.case_type_id = ct.id
-      INNER JOIN civicrm_pelf_venture_details v ON cs.id = v.entity_id
-      INNER JOIN civicrm_option_value stage ON cs.status_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
-      WHERE case_type_id IN ($allowed_case_types) AND cs.is_deleted = 0";
-    $dao = CRM_Core_DAO::executeQuery($sql);
-    $cases = [];
-    $used_case_statuses = [];
-    while ($dao->fetch()) {
-      $id = (int) $dao->id;
-      $cases[$id] = $dao->toArray() + ['funds_total' => 0];
-      // Ensure worth_percent is a float.
-      $cases[$id]['worth_percent'] = (float) $dao->worth_percent;
-      // $cases[$id]['projects'] = [];
-      $used_case_statuses[$dao->status_id] = TRUE;
-    }
-
-    $case_ids_sql = implode(',', array_keys($cases));
-
-    // Fetch all projects.
-    $projects = Civi\Api4\OptionValue::get()
-      ->setSelect(['value', 'label', 'color', 'grouping'])
-      ->addWhere('option_group.name', '=', 'pelf_project')
-      ->addWhere('is_active', '=', 1)
-      ->addOrderBy('label')
-      ->execute()
-      ->indexBy('value');
-
-    $summary_pivot_project_empty = [];
-    foreach ($projects as $project) {
-      preg_match('/^(.*?)\s*:\s*(.*)$/', $project['label'], $_);
-      $project_group = $_[1] ?? '(Ungrouped)';
-      $project_name = $_[2] ?? $dao->project;
-      $summary_pivot_project_empty[$project_group][$project_name] = [];
-    }
-
-    if ($cases) {
-
-      // Fetch all clients for these cases
-      $clients_linked = CRM_Core_DAO::executeQuery(
-        "SELECT contact_id, case_id FROM civicrm_case_contact WHERE case_id IN ($case_ids_sql)"
-        )->fetchAll();
-      $clients = [];
-      foreach ($clients_linked as $row) {
-        $client_contact_id = (int) $row['contact_id'];
-        $case_id = (int) $row['case_id'];
-        $clients[$client_contact_id] = NULL;
-        $cases[$case_id]['clients'][] = $client_contact_id;
-      }
-      // Fetch client data
-      $result = \Civi\Api4\Contact::get()
-        ->setSelect(['id', 'display_name'])
-        ->addWhere('id', 'IN', array_keys($clients))
-        ->execute();
-      foreach ($result as $client) {
-        $clients[$client['id']] = $client;
-      }
-
-      // Fetch last completed activity and first scheduled one.
-      $this->addNearActivities($cases);
-
-      // Fetch Allocations for these cases.
-      // Helpful to know which projects are encountered for each case.
-      $sql = "SELECT * FROM civicrm_pelf_funds_allocation WHERE case_id IN ($case_ids_sql) ORDER BY fy_start";
-      $dao = CRM_Core_DAO::executeQuery($sql);
-      $financial_years = [];
-      $projects_by_case = [];
-      $summary_pivot_project = $summary_pivot_project_empty;
-      $summary_pivot_status = [];
-      $totals = ['total' => 0, 'adjusted' => 0];
-
-      // Turn flat list into [project_group][project_name][fy][proj][adjusted|total] = total amount
-      while ($dao->fetch()) {
-        $_ = $dao->toArray();
-        $case = $cases[$dao->case_id];
-
-        // Keep track of financial years encountered and simplify
-        $year = substr($dao->fy_start, 0, 4);
-        if (substr($dao->fy_start, 6,5) !== '01-01') {
-          // Unless year start is 1 Jan, show FY as 2020-2021
-          $year .= '-' . ($year + 1);
-        }
-        $financial_years[$year] = NULL;
-        $_['fy'] = $year;
-        $cases[$dao->case_id]['funds'][$year][$dao->project] = $dao->amount;
-
-        // Track projects
-        $projects_by_case[(int) $dao->case_id][(int) $dao->project] = NULL;
-
-        // Grand totals
-        $totals['total'] += $dao->amount;
-        $totals['adjusted'] += $dao->amount * $case['worth_percent']/100;
-
-        // Project pivot calcs.
-        preg_match('/^(.*?)\s*:\s*(.*)$/', $projects[$dao->project]['label'], $_);
-        $project_group = $_[1] ?? '(Ungrouped)';
-        $project_name = $_[2] ?? $dao->project;
-        if (!isset($summary_pivot_project[$project_group][$project_name][$year])) {
-          $summary_pivot_project[$project_group][$project_name][$year] = ['total' => 0, 'adjusted' => 0];
-        }
-        $summary_pivot_project[$project_group][$project_name][$year]['total'] += $dao->amount;
-        $summary_pivot_project[$project_group][$project_name][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
-
-        // Status pivot calcs.
-        if (!isset($summary_pivot_status[$case['status_id']])) {
-          $summary_pivot_status[$case['status_id']] = [];
-        }
-        $summary_pivot_status[$case['status_id']][$year]['total'] += $dao->amount;
-        $summary_pivot_status[$case['status_id']][$year]['adjusted'] += $dao->amount * $case['worth_percent']/100;
-
-        $cases[$dao->case_id]['funds_total'] += $dao->amount;
-        //$unique_projects[(int) $dao->project] = NULL;
-      }
-      // Merge in projects_by_case
-      foreach ($projects_by_case as $case_id => $case_projects) {
-        $case_projects = array_keys($case_projects);
-        sort($case_projects);
-        $cases[$case_id]['projects'] = $case_projects;
-      }
-    }
-
-    // Project pivot
-    // We want totals by project group
-    $new = [];
-    foreach ($summary_pivot_project as $project_group => $by_project) {
-      $subtots = [];
-      foreach ($by_project as $project => $by_year) {
-        foreach ($by_year as $year => $_) {
-          if (!isset($subtots[$year])) {
-            $subtots[$year] = ['total' => 0, 'adjusted' => 0];
-          }
-          $subtots[$year]['total'] += $_['total'];
-          $subtots[$year]['adjusted'] += $_['adjusted'];
-        }
-      }
-      $summary_pivot_project[$project_group]['Subtotal'] = $subtots;
-      // Flatten the project group back in to the project.
-      foreach ($summary_pivot_project[$project_group] as $project_name => $_) {
-        $new["$project_group: $project_name"] = $_;
-      }
-    }
-    $summary_pivot_project = $new;
-    // PHP remembers the order of array keys, but whn converted to JSON and then to a js object the order is not preserved.
-    // Therefore we now create an array to preserve the order.
-    $summary_pivot_project = $this->hashToArray($summary_pivot_project, 1);
-
-    // Fetch all case statuses. @todo is active
-    $case_statuses = Civi\Api4\OptionValue::get()
-      ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
-      ->addWhere('option_group.name', '=', 'case_status')
-      ->addWhere('value', 'IN', array_keys($used_case_statuses))
-      ->addWhere('is_active', '=', '1')
-      ->execute()
-      ->indexBy('value');
-
-    return [
-      'clients'         => $clients,
-      'caseTypes'       => $this->caseTypes,
-      'cases'           => $cases,
-      'case_statuses'   => $case_statuses,
-      'projects'        => $projects,
-      'financial_years' => array_keys($financial_years),
-      'totals'          => $totals,
-      'pivot_projects'  => $summary_pivot_project,
-      'pivot_status'    => $summary_pivot_status,
-    ];
-  }
   protected function addNearActivities(&$cases) {
     // First find the last completed activity for each case.
 
@@ -518,6 +330,13 @@ class CRM_Pelf {
    * @return list of unique financial years.
    */
   protected function addFundAllocations(&$cases) {
+    // Initialise the 'funds' property of all cases.
+    foreach ($cases as &$case) {
+      $case['funds'] = [];
+      $case['funds_total'] = 0;
+    }
+    unset($case);
+
     $case_ids_sql = implode(',', array_keys($cases));
     // I'm not sure whether the ORDER BY is helpful. It's not necessary.
     $sql = "SELECT * FROM civicrm_pelf_funds_allocation WHERE case_id IN ($case_ids_sql) ORDER BY case_id, project, fy_start";
@@ -526,6 +345,7 @@ class CRM_Pelf {
     while ($dao->fetch()) {
       $financial_years[$dao->fy_start] = TRUE;
       $cases[$dao->case_id]['funds'][] = $dao->toArray();
+      $cases[$dao->case_id]['funds_total'] += $dao->amount;
     }
     return array_keys($financial_years);
   }

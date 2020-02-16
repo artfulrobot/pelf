@@ -11,7 +11,7 @@
 
         <th ng-if="cell.isHeader" rowspan="{{cell.span || 1}}" ng-class="cell.cellClasses">
           <div ng-if="cell.status"
-               ng-style="{ borderLeft: 'solid 4px ' + cell.status.color }"
+               ng-style="{ borderLeftColor: cell.status.color }"
                class="pelf-status-label"
                >{{cell.formatted}}</div>
           <div ng-if="cell.project" class="project header" ng-style="{ color: projects[cell.project].color }" >{{cell.formatted}}</div>

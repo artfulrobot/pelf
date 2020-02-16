@@ -10,10 +10,20 @@
   </div>
 
   <div ng-if="state == 'loaded'" >
-    <pelf-pivot source-rows="venture.funds" projects="projects" pivot-type="'full'"></pelf-pivot>
+
+    <h2>Project Summary</h2>
+
+    <pelf-pivot
+      source-rows="venture.funds"
+      projects="projects"
+      pivot-type="'full'"
+      show-adjusted="false"
+      table-class="'pelf-financial'"
+      ></pelf-pivot>
 
 
     <!-- Create an editable list of funds. We do this as a big ugly form because it's just going to be quicker to use like that. -->
+    <h2>Edit Funds</h2>
     <table >
       <thead>
         <tr>
@@ -24,7 +34,7 @@
       </thead>
       <tbody>
         <tr ng-repeat="row in venture.funds" >
-          <td><input ng-model="row.amount" ng-change="recalculateTotals(row)" /></td>
+          <td><input ng-model="row.amount" ng-change="recalculateTotals(row)" size="6" /></td>
           <td><select ng-model="row.fy_start" ng-change="recalculateTotals(row)" >
               <option ng-repeat="(v, fy) in venture.fiscalYears" value="{{v}}" >{{fy}}</option>
               </select>
@@ -37,16 +47,9 @@
         </tr>
        </tbody>
     </table>
-    <a href ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</a>
-    <button ng-if="dirty" class="btn-primary" ng-click="saveFunds()" >Save changes</button>
-    <p>Total {{ (venture.worth_percent < 100 ? 'estimated' : '') }} worth £{{total}}</p>
-    By project:
-    <ul>
-      <li ng-repeat="row in projectTotals">£{{row.total}} {{row.name}}</li>
-    </ul>
-    By year:
-    <ul>
-      <li ng-repeat="row in yearTotals">£{{row.total}} {{row.name}}</li>
-    </ul>
+    <button class="btn btn-secondary" ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</button>
+    &nbsp;
+    <button ng-show="dirty" class="btn btn-primary" ng-class="{disabled: !dirty}"
+      ng-click="saveFunds()" >Save changes</button>
   </div>
 </div>

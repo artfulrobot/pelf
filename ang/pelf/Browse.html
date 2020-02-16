@@ -79,21 +79,6 @@
           pivot-type="'by_status'"
           table-class="'pelf-financial by-status'"
           ></pelf-pivot>
-
-              <!--<td ng-repeat="fy in financial_years"
-                  class="pelf-financial__no-padding">
-                <div class="pelf-bg-barchart" >
-                  <div class="pelf-bg-barchart__bar"
-                       ng-if="totals[filters.adjusted ? 'adjusted' : 'total'] != 0"
-                       ng-style="{ width: pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 100 + '%',
-                                   left: (50 - pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total'] / totals[filters.adjusted ? 'adjusted' : 'total'] * 50) + '%',
-                                   backgroundColor: row.color,
-                                   opacity: 0.5
-                                   }"></div>
-                  <div class="pelf-bg-barchart__text pelf-money" >
-                    {{pivotStatus[row.value][fy][filters.adjusted ? 'adjusted' : 'total']}}
-                  </div>
-              -->
       </div>
     </div>
 
@@ -121,7 +106,7 @@
     <ul class="pelf-browse__table">
       <li ng-repeat="venture in sortedCases"
           class="pelf-browse__case {{ case_statuses[venture.status_id].grouping }}"
-          style="border-left: solid 4px {{case_statuses[venture.status_id].color}}"
+          style="border-left-color: {{case_statuses[venture.status_id].color}}"
           >
           <article class="pelf-browse__case-item">
             <div class="pelf-browse__case-meta">
@@ -140,19 +125,17 @@
             </div>
 
             <div class="pelf-browse__case-allocations" ng-if="listDetails === 'financial'">
-              <table>
-                <thead>
-                  <tr><th>Project</th>
-                    <th ng-repeat="fy in financial_years">{{fy}}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr ng-repeat="project_id in venture.projects">
-                    <td>{{projects[project_id].label}}</td>
-                    <td ng-repeat="fy in financial_years">{{ pelfMoney(venture.funds[fy][project_id], venture) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+
+              <pelf-pivot
+                source-rows="venture.funds"
+                projects="projects"
+                cases="cases"
+                case-statuses="case_statuses"
+                show-adjusted="filters.adjusted"
+                pivot-type="'project'"
+                table-class="'pelf-financial'"
+                ></pelf-pivot>
+
             </div>
 
             <div class="pelf-browse__case-activities" ng-if="listDetails === 'activity'">

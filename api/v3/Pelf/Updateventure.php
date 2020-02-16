@@ -40,17 +40,23 @@ function civicrm_api3_pelf_Updateventure($params) {
         throw new API_Exception("Tried to update a row that does not exist.");
       }
     }
-    if (!isset($projects[$row['project']])) {
-      throw new API_Exception("Invalid project");
+    if (empty($row['amount'])) {
+      // Delete this row.
+      $bao->delete();
     }
-    if (!preg_match('/^\d\d\d\d-\d\d-\d\d$/', $row['fy_start'])) {
-      throw new API_Exception("Invalid fiscal year start date.");
+    else {
+      if (!isset($projects[$row['project']])) {
+        throw new API_Exception("Invalid project");
+      }
+      if (!preg_match('/^\d\d\d\d-\d\d-\d\d$/', $row['fy_start'])) {
+        throw new API_Exception("Invalid fiscal year start date.");
+      }
+      $bao->case_id = $params['id'];
+      $bao->project = $row['project'];
+      $bao->amount = $row['amount'];
+      $bao->fy_start = $row['fy_start'];
+      $bao->save();
     }
-    $bao->case_id = $params['id'];
-    $bao->project = $row['project'];
-    $bao->amount = $row['amount'];
-    $bao->fy_start = $row['fy_start'];
-    $bao->save();
   }
   return civicrm_api3('Pelf', 'getventure', ['id' => $params['id']]);
 }

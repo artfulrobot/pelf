@@ -548,9 +548,6 @@ class Pivot {
       },
       link: function($scope, $el, $attr) {
         var ts = $scope.ts = CRM.ts('pelf');
-        // Q. do we want to watch this?
-        $scope.$watch('sourceRows', function(newValue) { $scope.sourceRows = newValue; $scope.recalc(); }, true);
-        $scope.$watch('showAdjusted', function(newValue) { $scope.recalc(); });
       },
       controller: ['$scope', function pelfPivot($scope) {
         var rowIsValid = row => (row.project && row.fy_start && row.amount);
@@ -610,6 +607,19 @@ class Pivot {
             ];
 
           }
+          if ($scope.pivotType === 'project') {
+            // Mini pivots in summary screens. Remove the total columns.
+            pivotConfig.rowGroupDefs = [
+              { name: 'Project',
+                accessor: row => $scope.projects[row.project].label,
+                total: false,
+                formatter: projectFormatter,
+              }
+            ];
+            pivotConfig.colGroupDefs = [
+              { name: 'Year', accessor: row => row.fy_start, total: false, formatter: fyFormatter }
+            ];
+          }
           if ($scope.pivotType === 'by_status') {
 
             pivotConfig.rowGroupDefs = [
@@ -648,8 +658,9 @@ class Pivot {
           $scope.tdRows = p.getRows();
           $scope.maxValue = maxValue;
         }
-        $scope.recalc();
+        // $scope.recalc();
 
+        $scope.$watch('[sourceRows, showAdjusted]', function() { $scope.recalc(); }, true);
       }]
     };
   });
