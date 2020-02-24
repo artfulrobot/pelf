@@ -22,7 +22,7 @@ article.pelf-browse__case-item>div {
   flex: 1 0 7rem;
 }
 .pelf-browse__case-name {
-  flex: 10 0 12rem;
+  flex: 1 0 12rem;
 }
 .pelf-browse__case-value {
   flex: 1 0 6rem;
@@ -33,8 +33,6 @@ article.pelf-browse__case-item>div {
 }
 .pelf-browse__case-activities {
   flex: 10 0 12rem;
-}
-article.pelf-browse__case-item h1 {
 }
 article.pelf-browse__case-item h1 {
   margin: 0;
@@ -131,6 +129,10 @@ table.pelf-financial div.data {
 }
 .pelf-browse__case-activities>div {
   flex: 1 0 10rem;
+  padding: 0 0.5rem;
+}
+.pelf-browse__case-activities>div>div {
+  height: 100%;
 }
 .pelf-browse__details-deselected,
 .pelf-browse__details-selected {
@@ -140,3 +142,45 @@ table.pelf-financial div.data {
 }
 .pelf-browse__details-selected { background-color: #aecde4; }
 .pelf-browse__details-deselected:hover {background-color: #aecde4; }
+
+/* The little activity cards. {{{ */
+.pelf-activity-card {
+  border-radius: 3px;
+  font-size: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  background-clip: border-box;
+  overflow: hidden;
+  background-color: rgba(0,0,0,0.02);
+
+}
+.pelf-activity-card.has-link {
+  cursor: pointer;
+}
+.pelf-activity-card.has-link:hover {
+  background-color: rgba(0,50,100,0.06);
+}
+.pelf-activity-card__row {
+  background-color: rgba(0,0,0,0.02);
+  border-bottom: solid 1px rgba(0,0,0,0.05);
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+}
+.pelf-activity-card__when {
+  flex: 1 0 auto;
+  padding: 0.25rem 0.5rem;
+}
+.pelf-activity-card__type {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.5rem;
+}
+.pelf-activity-card__subject {
+  flex: 1 0 auto;
+  padding: 0.25rem 0.5rem;
+}
+.pelf-activity-card__assignees {
+  flex: 0 0 auto;
+  padding: 0.25rem 0.5rem;
+}
+/* }}} */

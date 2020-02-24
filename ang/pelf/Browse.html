@@ -65,6 +65,7 @@
           cases="cases"
           show-adjusted="filters.adjusted"
           table-class="'pelf-financial'"
+          currency-symbol="currencySymbol"
           ></pelf-pivot>
       </div>
       <div class="pelf-summary-tables__table">
@@ -78,6 +79,7 @@
           show-adjusted="filters.adjusted"
           pivot-type="'by_status'"
           table-class="'pelf-financial by-status'"
+          currency-symbol="currencySymbol"
           ></pelf-pivot>
       </div>
     </div>
@@ -114,13 +116,13 @@
               <!-- todo: priority -->
             </div>
             <div class="pelf-browse__case-name">
-              <h1><a href="{{ venture.ventureUrl }}" >{{ venture.subject }}</a></h1>
+              <h1><a href="{{ venture.manageUrl }}" title="Manage Case">{{ venture.subject }}</a></h1>
               <div ng-repeat="client_id in venture.clients">
-                <a href="{{ crmURL('civicrm/contact/view', {cid: client_id, reset:1}) }}">{{ clients[client_id].display_name }}</a>
+                <a title="View Client Contact record" href="{{ crmURL('civicrm/contact/view', {cid: client_id, reset:1}) }}">{{ clients[client_id].display_name }}</a>
               </div>
             </div>
             <div class="pelf-browse__case-value">
-              <div>&pound;{{ pelfMoney(venture.funds_total, venture) }}</div><!-- @todo lookup local currency -->
+              <div><a href="{{ venture.ventureUrl }}" title="Edit Fund Allocation">{{ pelfMoney(venture.funds_total, venture) }}</a></div>
               <small>{{ venture.worth_percent }}%</small>
             </div>
 
@@ -134,24 +136,15 @@
                 show-adjusted="filters.adjusted"
                 pivot-type="'project'"
                 table-class="'pelf-financial'"
+                currency-symbol="currencySymbol"
                 ></pelf-pivot>
 
             </div>
 
             <div class="pelf-browse__case-activities" ng-if="listDetails === 'activity'">
-              <div ng-if="venture.activityLast">
-                Last: {{venture.activityLast.activity_type}} {{venture.activityLast.activity_date_time}}<br/>
-                <div>{{venture.activityLast.subject}}</div>
-                <div><i class="crm-i">&#xf2bd;</i> {{venture.activityLast.assigees}}</div>
-              </div>
-              <div ng-if="venture.activityNext">
-                Next: {{venture.activityNext.activity_type}} {{venture.activityNext.activity_date_time}}<br/>
-                <div>{{venture.activityNext.subject}}</div>
-                <div><i class="crm-i">&#xf2bd;</i> {{venture.activityNext.assigees}}</div>
-              </div>
-              <div ng-if="!venture.activityNext">
-                Next: Nothing scheduled
-              </div>
+
+              <div><pelf-activity-card activity="venture.activityLast" ></pelf-activity-card></div>
+              <div><pelf-activity-card activity="venture.activityNext" ></pelf-activity-card></div>
             </div>
           </article>
       </li>

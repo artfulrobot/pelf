@@ -541,10 +541,12 @@ class Pivot {
         tableClass: '=',
         sourceRows: '=',
         pivotType: '=',
-        projects: '=',
         showAdjusted: '=',
+        // Is this below all shared stuff? todo
+        projects: '=',
         cases: '=',
         caseStatuses: '=',
+        currencySymbol: '=',
       },
       link: function($scope, $el, $attr) {
         var ts = $scope.ts = CRM.ts('pelf');
@@ -554,6 +556,7 @@ class Pivot {
 
         const tsTotal = ts('Total') + ' ';
 
+        // This formats the project name in the (side) header cells.
         const projectFormatter = (th) => {
           if (th.groupKey) {
             // Get project value
@@ -563,6 +566,7 @@ class Pivot {
           return ((th.type === 'total') ? tsTotal : '');
         };
 
+        // This formats the financial year in the (top) header cells.
         const fyFormatter = (th) => {
           const y = parseInt(th.groupKey.substr(0, 4));
           if (th.groupKey.substr(-5) === '01-01') {
@@ -589,7 +593,7 @@ class Pivot {
           pivotConfig.valueFormatter = cell => {
             // Use this loop to determine the max value
             maxValue = Math.max(maxValue, cell.value);
-            return Math.round(cell.value).toLocaleString();
+            return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
           };
 
           if ($scope.pivotType === 'full') {
@@ -645,7 +649,7 @@ class Pivot {
               if (cell.rowGroup.cells[0] && cell.rowGroup.cells[0].status) {
                 cell.barColour = cell.rowGroup.cells[0].status.color;
               }
-              return Math.round(cell.value).toLocaleString();
+              return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
             };
 
           }

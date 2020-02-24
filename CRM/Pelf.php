@@ -19,6 +19,7 @@ class CRM_Pelf {
    */
   public $case_stage_option_group_id;
 
+  public $currencySymbol='';
   public $activity_type_option_group_id;
   /** I believe this is always a constant */
   public $activity_record_type_assignee = 1;
@@ -43,6 +44,10 @@ class CRM_Pelf {
     $this->activity_type_option_group_id = (int) civicrm_api3('OptionGroup', 'getvalue', ['return' => 'id', 'name'=>'activity_type']);
     $customFieldID = CRM_Core_BAO_CustomField::getCustomFieldID('pelf_worth_percent', 'pelf_venture_details');
     $this->worthPercentApiName = 'custom_' . $customFieldID;
+
+    // Look up default currency; we only work with one currency.
+    $currencyIsoCode = Civi::settings()->get('defaultCurrency');
+    $this->currencySymbol = CRM_Core_PseudoConstant::get('CRM_Contribute_DAO_Contribution', 'currency',['labelColumn' => 'symbol'])[$currencyIsoCode] ?? $currencyIsoCode;
 
     $this->getConfig();
   }
@@ -111,6 +116,7 @@ class CRM_Pelf {
       'caseTypes'         => $caseTypes,
       'pelfConfig'        => $this->getConfig(),
       'caseStatusesInUse' => $results,
+      'currencySymbol'    => $symbol,
     ];
 
     return $return;
@@ -225,14 +231,19 @@ class CRM_Pelf {
       $financial_years = $this->addFundAllocations($cases);
     }
 
-    // Fetch all case statuses.
-    $case_statuses = Civi\Api4\OptionValue::get()
-      ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
-      ->addWhere('option_group.name', '=', 'case_status')
-      ->addWhere('value', 'IN', array_keys($used_case_statuses))
-      ->addWhere('is_active', '=', '1')
-      ->execute()
-      ->indexBy('value');
+    // Fetch all case statuses in use.
+    if ($used_case_statuses) {
+      $case_statuses = Civi\Api4\OptionValue::get()
+        ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
+        ->addWhere('option_group.name', '=', 'case_status')
+        ->addWhere('value', 'IN', array_keys($used_case_statuses))
+        ->addWhere('is_active', '=', '1')
+        ->execute()
+        ->indexBy('value');
+    }
+    else {
+      $case_statuses = [];
+    }
 
     return [
       'clients'         => $clients,
@@ -242,6 +253,7 @@ class CRM_Pelf {
       'projects'        => $projects,
       'financial_years' => $financial_years,
       'totals'          => $totals,
+      'currencySymbol'  => $this->currencySymbol,
     ];
   }
   protected function addNearActivities(&$cases) {
@@ -287,14 +299,12 @@ class CRM_Pelf {
     $results = CRM_Core_DAO::executeQuery($sql);
     // @todo check permissions
     while ($results->fetch()) {
-      $cases[$results->case_id]['activityLast'] = $results->toArray();
-      $cases[$results->case_id]['activityLast']['activity_date_time'] =
-        date('j M Y', strtotime($cases[$results->case_id]['activityLast']['activity_date_time']));
+      $cases[$results->case_id]['activityLast'] = $this->nearActivitiesFormat($cases[$results->case_id], $results->toArray());
     }
 
     $sql = "SELECT
       a.id, a.subject, a.activity_date_time,
-      atype.label,
+      atype.label activity_type,
       ca.case_id,
       (
         SELECT GROUP_CONCAT(c.display_name SEPARATOR ', ')
@@ -319,8 +329,22 @@ class CRM_Pelf {
     $results = CRM_Core_DAO::executeQuery($sql);
     // @todo check permissions
     while ($results->fetch()) {
-      $cases[$results->case_id]['activityNext'] = $results->toArray();
+      $cases[$results->case_id]['activityNext'] = $this->nearActivitiesFormat($cases[$results->case_id], $results->toArray());
     }
+  }
+  /**
+   */
+  protected function nearActivitiesFormat($case, $activity) {
+    $caseID = $case['id'];
+    $firstClientContactID = current($case['clients']) ?? NULL;
+    if (!$firstClientContactID) {
+      // Weird.
+      return [];
+    }
+    // @todo use localised date format.
+    $activity['activity_date_time'] = date('j M Y', strtotime($activity['activity_date_time']));
+    $activity['url'] = CRM_Utils_System::url('civicrm/case/activity', ['reset' => 1, 'cid' => $firstClientContactID, 'caseid' => $caseID, 'id' => $activity['id'], 'action' => 'update']);
+    return $activity;
   }
   /**
    * Adds info into each cases's 'funds' key, and returns unique financial_years
@@ -515,10 +539,18 @@ class CRM_Pelf {
     $suffix = "-$start_month-$start_day";
 
     // Get years from must includes.
-    $years = array_map(function($date) { return substr($date, 0, 4); }, $mustInclude);
-    sort($years);
-    $earliest = min(date('Y') - 10, reset($years));
-    $latest = max(date('Y') + 10, end($years));
+    $years = [];
+    $earliest = date('Y') - 10;
+    $latest = date('Y') + 10;
+
+    if ($mustInclude) {
+      $years = array_map(function($date) { return substr($date, 0, 4); }, $mustInclude);
+      sort($years);
+      if ($years) {
+        $earliest = min(date('Y') - 10, reset($years));
+        $latest = max(date('Y') + 10, end($years));
+      }
+    }
 
     $options = [];
     for ($year = $earliest; $year <= $latest; $year++) {

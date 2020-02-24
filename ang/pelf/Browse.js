@@ -54,6 +54,7 @@
     $scope.$watch('filters', applySortAndFilter, true);
     $scope.totals = { adjusted: 0, total: 0 };
     $scope.filteredFunds = [];
+    $scope.currencySymbol = '';
 
     /**
      * Recreates sortedCases and filteredFunds arrays according to the user
@@ -136,7 +137,7 @@
     $scope.pelfMoney = function(amount, item) {
       if (!amount) return '';
       amount = adjustAmount(amount, item);
-      amount = (Math.round(amount/10) * 10).toString();
+      amount = $scope.currencySymbol + (Math.round(amount/10) * 10).toString();
       return amount;
     };
     function adjustAmount(amount, item) {
@@ -166,6 +167,8 @@
         });
         venture.ventureUrl = civiRoot + '#pelf/venture/' + venture.id;
       });
+      $scope.currencySymbol = r.currencySymbol;
+      console.log("Set currencySymbol", $scope.currencySymbol);
       $scope.cases = r.cases;
       $scope.clients = r.clients;
       $scope.state = 'loaded';
@@ -215,6 +218,25 @@
     $scope.reload = reload;
 
     reload();
+  });
+
+
+  angular.module('pelf').directive('pelfActivityCard', function() {
+    return {
+      templateUrl: '~/pelf/ActivityCard.html',
+      restrict: 'E',
+      replace: true,
+      scope: {
+        activity: '='
+      },
+      link(scope, el) {
+        scope.editActivity = function editActivity(url) {
+          if (url) {
+            window.location = url;
+          }
+        }
+      }
+    };
   });
 
 })(angular, CRM.$, CRM._);

@@ -36,6 +36,8 @@ function civicrm_api3_pelf_Getventure($params) {
   $v = ['entityID' => $params['id']];
   $returnValues['worth_percent'] = CRM_Core_BAO_CustomValueTable::getValues($v)[$_] ?? NULL;
 
+  $returnValues['currencySymbol'] = $pelf->currencySymbol;
+
   // Now load all the funds records for this case
   $bao = new CRM_Pelf_BAO_PelfFundsAllocation();
   $bao->case_id = $params['id'];

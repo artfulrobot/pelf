@@ -19,6 +19,7 @@
       pivot-type="'full'"
       show-adjusted="false"
       table-class="'pelf-financial'"
+      currency-symbol="venture.currencySymbol"
       ></pelf-pivot>
 
 
@@ -27,7 +28,7 @@
     <table >
       <thead>
         <tr>
-          <th>Amount</th>
+          <th>Amount ({{venture.currencySymbol}})</th>
           <th>Financial Year</th>
           <th>Project</th>
         </tr>
@@ -47,9 +48,9 @@
         </tr>
        </tbody>
     </table>
-    <button class="btn btn-secondary" ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</button>
+    <button class="crm-button btn-secondary" ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</button>
     &nbsp;
-    <button ng-show="dirty" class="btn btn-primary" ng-class="{disabled: !dirty}"
+    <button ng-show="dirty" class="crm-button btn-primary" ng-class="{disabled: !dirty}"
       ng-click="saveFunds()" >Save changes</button>
   </div>
 </div>
