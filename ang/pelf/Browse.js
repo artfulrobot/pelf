@@ -234,8 +234,9 @@
           if (url) {
             window.location = url;
           }
-        }
-      }
+        };
+        scope.ts = CRM.ts('pelf');
+      },
     };
   });
 

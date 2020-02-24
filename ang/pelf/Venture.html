@@ -1,9 +1,6 @@
 <div class="crm-container">
-  <h1 crm-page-title>{{ pageTitle }}</h1>
-
-  <div class="messages" ng-if="state == 'loading'" >
-    Please wait...
-  </div>
+  <h1 crm-page-title>Pelf: {{ (state === 'loading') ? 'Loading' : pageTitle }}</h1>
+  <a href="#/pelf/browse/type/{{venture.case_type_id}}" >{{venture.case_type_title}} summary</a>
 
   <div ng-if="state == 'failed'" >
     <div class="messages error" >{{error}}</div>
@@ -14,7 +11,7 @@
     <h2>Project Summary</h2>
 
     <pelf-pivot
-      source-rows="venture.funds"
+      source-rows="validRows"
       projects="projects"
       pivot-type="'full'"
       show-adjusted="false"
@@ -48,7 +45,7 @@
         </tr>
        </tbody>
     </table>
-    <button class="crm-button btn-secondary" ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add another</button>
+    <button class="crm-button btn-secondary" ng-click="venture.funds.push({amount: '', fy_start: '', project: ''})">Add row</button>
     &nbsp;
     <button ng-show="dirty" class="crm-button btn-primary" ng-class="{disabled: !dirty}"
       ng-click="saveFunds()" >Save changes</button>

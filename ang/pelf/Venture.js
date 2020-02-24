@@ -19,13 +19,14 @@
     // Called when data has been loaded.
     function updateData(r) {
       const venture = r.values;
+      console.log("venture", venture);
       $scope.state = 'loaded';
       $scope.dirty = false;
       $scope.projects = {};
       _.each(venture.projects, proj => { $scope.projects[proj.value] = proj; });
       _.each(venture.funds, row => { row.amount = Math.round(parseFloat(row.amount)); })
       $scope.venture = venture;
-      $scope.pageTitle = venture.subject;
+      $scope.pageTitle = venture.case_type_title + ': ' + venture.subject;
       $scope.recalculateTotals();
       // Sort funds by financial year, project
       $scope.venture.funds = _.sortByAll($scope.venture.funds, ['fy_start', 'project']);
@@ -43,6 +44,8 @@
         row.changed = true;
         $scope.dirty = true;
       }
+
+      $scope.validRows = $scope.venture.funds.filter(row =>(row.project && row.fy_start && row.amount));
     };
 
     // Initial state is loading.

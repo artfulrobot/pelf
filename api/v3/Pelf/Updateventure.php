@@ -33,18 +33,26 @@ function civicrm_api3_pelf_Updateventure($params) {
   $projects = $pelf->getProjects();
   foreach ($params['funds'] as $row) {
     $bao = new CRM_Pelf_BAO_PelfFundsAllocation();
+    $rowShouldNotExist = empty($row['amount']);
 
     if ($row['id']) {
       $bao->id = $row['id'];
       if (!$bao->find(1)) {
+        // Row not found, but it was there when we started editing.
         throw new API_Exception("Tried to update a row that does not exist.");
       }
+      // Row found. If the incoming amount is empty, delete this row.
+      if ($rowShouldNotExist) {
+        // Delete this row.
+        $bao->delete();
+      }
     }
-    if (empty($row['amount'])) {
-      // Delete this row.
-      $bao->delete();
+    if ($rowShouldNotExist) {
+      // Row is to be ignored as the amount is blank.
+      continue;
     }
     else {
+      // Row should exist. Continue to check validity.
       if (!isset($projects[$row['project']])) {
         throw new API_Exception("Invalid project");
       }

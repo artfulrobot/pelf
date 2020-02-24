@@ -552,7 +552,6 @@ class Pivot {
         var ts = $scope.ts = CRM.ts('pelf');
       },
       controller: ['$scope', function pelfPivot($scope) {
-        var rowIsValid = row => (row.project && row.fy_start && row.amount);
 
         const tsTotal = ts('Total') + ' ';
 
@@ -600,7 +599,7 @@ class Pivot {
 
             pivotConfig.rowGroupDefs = [
               { name: 'Project',
-                accessor: row => $scope.projects[row.project].label.replace(/\s*:.*$/, ''),
+                accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label.replace(/\s*:.*$/, '') ;},
                 total: true,
                 formatter: projectFormatter,
               },

@@ -122,6 +122,8 @@ table.pelf-financial div.data {
   flex: 1 0 auto;
   padding: 0 2rem;
 }
+.pelf-summary-tables__table table { width: 100%; }
+
 .pelf-browse__case-activities {
   display:flex;
   flex-wrap:wrap;
@@ -154,11 +156,15 @@ table.pelf-financial div.data {
   background-color: rgba(0,0,0,0.02);
 
 }
-.pelf-activity-card.has-link {
+.pelf-activity-card.activity {
   cursor: pointer;
 }
-.pelf-activity-card.has-link:hover {
+.pelf-activity-card.activity:hover {
   background-color: rgba(0,50,100,0.06);
+}
+.pelf-activity-card.missing {
+  /* Fade the text */
+  color: rgb(0, 0, 0, 0.5);
 }
 .pelf-activity-card__row {
   background-color: rgba(0,0,0,0.02);

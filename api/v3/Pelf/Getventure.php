@@ -27,10 +27,13 @@ function _civicrm_api3_pelf_Getventure_spec(&$spec) {
  * @throws API_Exception
  */
 function civicrm_api3_pelf_Getventure($params) {
+  $pelf = pelf();
 
   $returnValues = civicrm_api3('Case', 'getsingle', ['id' => $params['id'], 'is_deleted' => 0]);
 
-  $pelf = pelf();
+  // Look up case type name.
+  $returnValues['case_type_title'] = $pelf->getCaseTypes()[$returnValues['case_type_id']]['title'] ?? '(invalid case type)';
+
   // Load worth percent
   $_ = $pelf->worthPercentApiName;
   $v = ['entityID' => $params['id']];
