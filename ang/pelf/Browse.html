@@ -122,7 +122,9 @@
               </div>
             </div>
             <div class="pelf-browse__case-value">
-              <div><a href="{{ venture.ventureUrl }}" title="Edit Fund Allocation">{{ pelfMoney(venture.funds_total, venture) }}</a></div>
+              <div>
+                <a href="{{ venture.ventureUrl }}" title="Edit Fund Allocation">{{ venture.funds_total ? pelfMoney(venture.funds_total, venture) : 'Add funds' }}</a>
+              </div>
               <small>{{ venture.worth_percent }}%</small>
             </div>
 
