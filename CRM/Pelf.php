@@ -292,8 +292,8 @@ class CRM_Pelf {
         AND NOT EXISTS (
           SELECT 1
           FROM civicrm_case_activity ca2
-          INNER JOIN civicrm_activity a2 ON ca2.activity_id = a2.id AND ca2.case_id = ca2.case_id
-          WHERE a2.activity_date_time > a.activity_date_time AND a2.activity_date_time < NOW()
+          INNER JOIN civicrm_activity a2 ON ca2.activity_id = a2.id
+          WHERE ca2.case_id = ca.case_id AND a2.activity_date_time > a.activity_date_time AND a2.activity_date_time < NOW()
         )
     ";
     $results = CRM_Core_DAO::executeQuery($sql);
@@ -323,7 +323,7 @@ class CRM_Pelf {
           SELECT 1
           FROM civicrm_case_activity ca2
           INNER JOIN civicrm_activity a2 ON ca2.activity_id = a2.id AND ca2.case_id = ca2.case_id
-          WHERE a2.activity_date_time < a.activity_date_time AND a2.activity_date_time > NOW()
+          WHERE ca2.case_id = ca.case_id AND a2.activity_date_time < a.activity_date_time AND a2.activity_date_time > NOW()
         )
     ";
     $results = CRM_Core_DAO::executeQuery($sql);
@@ -378,11 +378,11 @@ class CRM_Pelf {
    *
    * @param array $tpl
    */
-  public function createStatusTemplate($tpl) {
+  public function createStatusTemplate($tpl, $checkPermissions) {
 
     // Check if it exists.
     if (Civi\Api4\OptionValue::get()
-      ->setCheckPermissions(FALSE)
+      ->setCheckPermissions($checkPermissions)
       ->selectRowCount()
       ->addWhere('option_group_id', '=', $this->case_stage_option_group_id)
       ->addWhere('name', '=', $tpl['name'])
@@ -392,6 +392,7 @@ class CRM_Pelf {
     }
     // Create it.
     \Civi\Api4\OptionValue::create()
+      ->setCheckPermissions($checkPermissions)
       ->addValue('option_group_id', $this->case_stage_option_group_id)
       ->addValue('label', $tpl['label'])
       ->addValue('name', $tpl['name'])
@@ -413,7 +414,7 @@ class CRM_Pelf {
    *
    * @param array $tpl
    */
-  public function createCaseTypeTemplate($tpl) {
+  public function createCaseTypeTemplate($tpl, $checkPermissions=TRUE) {
 
     // Check if it exists.
     $case_type_id = civicrm_api3('CaseType', 'get', [ 'return' => 'id', 'name' => $tpl['name'] ])['id'] ?? NULL;
@@ -479,7 +480,7 @@ class CRM_Pelf {
     // Create the statuses for it.
     foreach ($tpl['statuses'] as $statusTpl) {
       try {
-        $this->createStatusTemplate($statusTpl);
+        $this->createStatusTemplate($statusTpl, $checkPermissions);
       }
       catch (InvalidArgumentException $e) {
         if (substr($e->getMessage(), 0, 31) === 'This status is already defined.') {

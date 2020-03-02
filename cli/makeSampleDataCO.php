@@ -189,11 +189,13 @@ $data = [
     // }}}
 
 // Create Case type, statuses, config.
+/*
 $params=json_decode($tpls, TRUE);
 if (!$params) {
   throw new \InvalidArgumentException("invalid tpl json");
 }
 pelf()->createCaseTypeTemplate($params);
+*/
 
 // Create funders.
 foreach ($data['funders'] as &$funder) {

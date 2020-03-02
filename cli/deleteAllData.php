@@ -124,9 +124,11 @@ JSON;
     $case_statuses = Civi\Api4\OptionValue::get()
       ->addWhere('option_group.name', '=', 'case_status')
       ->addWhere('name', 'LIKE', 'pelf_%')
+      ->setCheckPermissions(FALSE)
       ->execute();
     foreach ($case_statuses as $_) {
       Civi\Api4\OptionValue::delete()
+        ->setCheckPermissions(FALSE)
         ->addWhere('id', '=',$_['id'])
         ->execute();
     }

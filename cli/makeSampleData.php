@@ -88,49 +88,172 @@ JSON;
     //}}}
 
     // Create Case type, statuses, config.
-    pelf()->createCaseTypeTemplate(json_decode($tpls, TRUE));
+    pelf()->createCaseTypeTemplate(json_decode($tpls, TRUE), FALSE);
 
 $data = [
   'funders' => [
-    'funder_a' => [
-      'name' => 'Trickle Down Foundation',
-    ],
-    'funder_b' => [
-      'name' => 'Spoils of Extractavism fund',
-    ],
+    'funder_a' => [ 'name' => 'Trickle Down Foundation', ],
+    'funder_b' => [ 'name' => 'Spoils of Extractavism Fund', ],
+    'funder_c' => [ 'name' => 'Mx Smith Foundation', ],
+    'funder_d' => [ 'name' => 'Radical Soap Shop', ],
+    'funder_e' => [ 'name' => 'Cotswold Philanthopists Trust', ],
   ],
   'staff' => [
-    'staff_a' => [ 'display_name' => 'Wilma', ],
-    'staff_b' => [ 'display_name' => 'Betty', ],
-    'staff_c' => [ 'display_name' => 'Barney', ],
+    'staff_a' => [ 'display_name' => 'Wilma Test', ],
+    'staff_b' => [ 'display_name' => 'Betty Test', ],
+    'staff_c' => [ 'display_name' => 'Barney Test', ],
   ],
   'projects' => [
     'Unallocated' => 1,
-    'Activism' => 2,
+    'Climate Change: divestment' => 2,
+    'Climate Change: green jobs' => 3,
+    'Climate Change: communication' => 4,
+    'Sweatshops: garments' => 5,
+    'Sweatshops: electronics' => 6,
   ],
   'cases' => [
     'case_a' => [
       'subject'       => 'Climate Emergency national action',
+      'date'          => '2019-05-01',
       'client'        => 'funder_a',
       'coordinator'   => 'staff_a',
       'status_id'     => 'pelf_writing',
       'worth_percent' => '50',
       'allocations' => [
-        ['amount' => 1000, 'fy' => '2020-04-06', 'project' => 'unallocated'],
-      ]
+        ['amount' => 1000, 'fy' => '2020-04-06', 'project' => 'Climate Change: divestment'],
+      ],
+      'activities' => [
+        [
+          'type' => 'Meeting',
+          'subject' => 'Chat about progress',
+          'datetime' => '2020-01-02',
+          'status' => 'Completed',
+          'assignee' => 'staff_a',
+        ],
+        [
+          'type' => 'Meeting',
+          'subject' => 'Report back on Q1',
+          'datetime' => '2020-08-06',
+          'status' => 'Scheduled',
+          'assignee' => 'staff_b',
+        ],
+      ],
     ],
     'case_b' => [
       'subject'       => 'Not too late to go green',
+      'date'          => '2019-05-01',
       'client'        => 'funder_b',
       'coordinator'   => 'staff_b',
       'status_id'     => 'pelf_submitted',
       'worth_percent' => '10',
       'allocations' => [
-        ['amount' => 3000, 'fy' => '2019-04-06', 'project' => 'unallocated'],
-        ['amount' => 2000, 'fy' => '2020-04-06', 'project' => 'unallocated'],
-        ['amount' => 1000, 'fy' => '2020-04-06', 'project' => 'activism'],
-      ]
+        ['amount' => 3000, 'fy' => '2019-04-06', 'project' => 'Climate Change: communication'],
+        ['amount' => 2000, 'fy' => '2020-04-06', 'project' => 'Climate Change: communication'],
+        ['amount' => 1000, 'fy' => '2020-04-06', 'project' => 'Climate Change: divestment'],
+      ],
+      'activities' => [
+        [
+          'type' => 'Meeting',
+          'subject' => 'Online discussion: is it?',
+          'datetime' => '2019-06-02',
+          'status' => 'Completed',
+          'assignee' => 'staff_a',
+        ],
+        [
+          'type' => 'Follow Up',
+          'subject' => 'Reapply?',
+          'datetime' => '2020-05-06',
+          'status' => 'Scheduled',
+          'assignee' => 'staff_b',
+        ],
+      ],
     ],
+
+    'case_c' => [
+      'subject'       => 'Local activism',
+      'date'          => '2019-05-01',
+      'client'        => 'funder_c',
+      'coordinator'   => 'staff_a',
+      'status_id'     => 'pelf_negotiate',
+      'worth_percent' => '50',
+      'allocations' => [
+        ['amount' => 20000, 'fy' => '2019-04-06', 'project' => 'Sweatshops: electronics'],
+        ['amount' => 15000, 'fy' => '2020-04-06', 'project' => 'Sweatshops: electronics'],
+        ['amount' =>  5000, 'fy' => '2020-04-06', 'project' => 'Sweatshops: garments'],
+      ],
+      'activities' => [
+        [
+          'type' => 'Meeting',
+          'subject' => 'Meet new trustee',
+          'datetime' => '2019-06-02',
+          'status' => 'Completed',
+          'assignee' => 'staff_a',
+        ],
+        [
+          'type' => 'Follow Up',
+          'subject' => 'Financial report',
+          'datetime' => '2020-06-01',
+          'status' => 'Scheduled',
+          'assignee' => 'staff_b',
+        ],
+      ],
+    ],
+
+    'case_d' => [
+      'subject'       => 'Electronics Watch Affiliation',
+      'date'          => '2019-05-01',
+      'client'        => 'funder_d',
+      'coordinator'   => 'staff_a',
+      'status_id'     => 'pelf_contract',
+      'worth_percent' => '100',
+      'allocations' => [
+        ['amount' => 15000, 'fy' => '2019-04-06', 'project' => 'Sweatshops: electronics'],
+        ['amount' => 5000, 'fy' => '2019-04-06', 'project' => 'Unallocated'],
+        ['amount' => 15000, 'fy' => '2020-04-06', 'project' => 'Sweatshops: electronics'],
+        ['amount' => 5000, 'fy' => '2020-04-06', 'project' => 'Unallocated'],
+      ],
+      'activities' => [
+        [
+          'type' => 'Meeting',
+          'subject' => 'Funder visited',
+          'datetime' => '2019-06-02',
+          'status' => 'Completed',
+          'assignee' => 'staff_a',
+        ],
+        [
+          'type' => 'Follow Up',
+          'subject' => 'Invite to workshop',
+          'datetime' => '2020-08-06',
+          'status' => 'Scheduled',
+          'assignee' => 'staff_b',
+        ],
+      ],
+    ],
+
+    'case_e' => [
+      'date'          => '2019-05-01',
+      'subject'       => 'Supply chain justice',
+      'client'        => 'funder_e',
+      'coordinator'   => 'staff_b',
+      'status_id'     => 'pelf_contract',
+      'worth_percent' => '100',
+      'allocations' => [
+        ['amount' => 5000,  'fy' => '2019-04-06', 'project' => 'Sweatshops: garments'],
+        ['amount' => 15000, 'fy' => '2020-04-06', 'project' => 'Sweatshops: garments'],
+      ],
+      'activities' => [
+        [
+          'type'     => 'Meeting',
+          'subject'  => 'Initial planning meeting',
+          'datetime' => '2019-08-02',
+          'status'   => 'Completed',
+          'assignee' => 'staff_a',
+        ],
+      ],
+    ],
+
+
+
   ],
 ];
 
@@ -184,6 +307,9 @@ $worth_field_id = 'custom_' . CRM_Core_BAO_CustomField::getCustomFieldID('pelf_w
 // Lookup the case type id for the pelf_grant
 $grant_case_type_id = civicrm_api3('CaseType', 'getvalue', ['return' => 'id', 'name' => 'pelf_grant']);
 
+// Look up activity types.
+
+
 // Create cases
 foreach ($data['cases'] as &$case) {
   $id = civicrm_api3('case', 'get', [
@@ -198,6 +324,9 @@ foreach ($data['cases'] as &$case) {
       'case_type_id'  => $grant_case_type_id,
       'creator_id'    => $data['staff'][$case['coordinator']]['id'],
       $worth_field_id => $case['worth_percent'],
+      'created_date'  => $case['date'],
+      'start_date'    => $case['date'],
+      'modified_date' => $case['date'],
     ];
     $id = civicrm_api3('case', 'create', $params)['id'] ?? NULL;
 
@@ -208,6 +337,24 @@ foreach ($data['cases'] as &$case) {
         'fy_start' => $allocation['fy'],
         'project' => $data['projects'][$allocation['project']],
       ]);
+    }
+
+    foreach ($case['activities'] ?? [] as $activity_idx => $activity) {
+      $params = [
+        'source_contact_id'  => $data['funders'][$case['client']]['id'],
+        'activity_type_id'   => $activity['type'],
+        'activity_status_id' => $activity['status'],
+        'case_id'            => $id,
+        'location'           => "pelf_test: case$id activity$activity_idx",
+        'subject'            => $activity['subject'],
+        'activity_date_time' => $activity['datetime'],
+        'target_id'          => $data['funders'][$case['client']]['id'],
+        'assignee_id'        => $data['staff'][$activity['assignee']]['id'],
+      ];
+      if (!civicrm_api3('activity', 'getcount', ['location' => $params['location']])) {
+        $activity_id = civicrm_api3('activity', 'create', $params)['id'] ?? 'FAIL';
+        print "Activity $params[location]: $activity_id\n";
+      }
     }
   }
   $case['id'] = $id;
