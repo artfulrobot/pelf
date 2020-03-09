@@ -152,6 +152,11 @@ class CRM_Pelf {
     Civi::settings()->set('pelf_config', json_encode($newConfig));
     $this->getConfig(TRUE);
 
+    if ($additions || $removals) {
+      // Update menu.
+      \CRM_Core_BAO_Navigation::resetNavigation();
+    }
+
     return $this;
   }
   /**
