@@ -2,7 +2,7 @@
   ng-class="activity ? 'activity' : 'missing'"
   ng-click="editActivity(activity.url)">
   <div class="pelf-activity-card__row">
-    <div class="pelf-activity-card__when">{{activity.activity_date_time || ts('(No activity)')}}</div>
+    <div class="pelf-activity-card__when">{{context}}: {{activity.activity_date_time || ts('(No activity)')}}</div>
     <div class="pelf-activity-card__type">{{activity.activity_type || ''}}</div>
   </div>
   <div class="pelf-activity-card__subject">{{activity.subject || ''}}</div>

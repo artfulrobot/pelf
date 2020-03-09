@@ -227,7 +227,8 @@
       restrict: 'E',
       replace: true,
       scope: {
-        activity: '='
+        activity: '=',
+        context: '=',
       },
       link(scope, el) {
         scope.editActivity = function editActivity(url) {
