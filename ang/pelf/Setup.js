@@ -126,6 +126,14 @@
               phase: 'prospect',
               weight: 1,
             },
+      pelf_identify: {
+              name: 'pelf_identify',
+              label: 'Identify',
+              description: '',
+              color: '#DFFBE5',
+              phase: 'prospect',
+              weight: 5,
+            },
       pelf_research: {
               name: 'pelf_research',
               label: 'Research',
@@ -240,6 +248,7 @@
           title: 'Partnership',
           statuses: [
             templateStatuses.pelf_hold,
+            templateStatuses.pelf_identify,
             templateStatuses.pelf_research,
             templateStatuses.pelf_approach,
             templateStatuses.pelf_negotiate,
