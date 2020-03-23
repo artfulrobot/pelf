@@ -264,6 +264,9 @@ class CRM_Pelf {
   protected function addNearActivities(&$cases) {
     // First find the last completed activity for each case.
 
+    // We assume this:
+    $urgent_priority = 1;
+
     // Do this with SQL to get most of the data, then filter it by running the
     // activities through API4 to apply permissions.
     implode(',', array_map(function ($_) { return (int) $_; }, array_column($cases, 'id')));
@@ -308,7 +311,7 @@ class CRM_Pelf {
     }
 
     $sql = "SELECT
-      a.id, a.subject, a.activity_date_time,
+      a.id, a.subject, a.activity_date_time, IF(a.priority_id = $urgent_priority, 1, 0) urgent,
       atype.label activity_type,
       ca.case_id,
       (

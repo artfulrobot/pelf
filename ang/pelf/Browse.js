@@ -166,6 +166,31 @@
           selectedChild: 'case'
         });
         venture.ventureUrl = civiRoot + '#pelf/venture/' + venture.id;
+
+        if (venture.activityNext) {
+          venture.activityNext.soon = '';
+
+          var diff = new Date(venture.activityNext.activity_date_time);
+          diff.setHours(0);
+          diff.setMinutes(0);
+          diff.setSeconds(0);
+          var n = new Date();
+          n.setHours(0);
+          n.setMinutes(0);
+          n.setSeconds(0);
+
+          diff = Math.round((diff - n)/1000/60/60/24);
+          if (diff <= 1) {
+            venture.activityNext.soon = 'Today';
+          }
+          else if (diff <= 2) {
+            venture.activityNext.soon = 'Tomorrow';
+          }
+          if (diff < 7) {
+            venture.activityNext.soon = 'In ' + Math.floor(diff) + ' days';
+          }
+
+        }
       });
       $scope.currencySymbol = r.currencySymbol;
       console.log("Set currencySymbol", $scope.currencySymbol);

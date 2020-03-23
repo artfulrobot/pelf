@@ -111,9 +111,13 @@
           style="border-left-color: {{case_statuses[venture.status_id].color}}"
           >
           <article class="pelf-browse__case-item">
+
             <div class="pelf-browse__case-meta">
               {{ case_statuses[venture.status_id].label }}
-              <!-- todo: priority -->
+              <div ng-if="venture.activityNext" >
+                <span ng-show="venture.activityNext.urgent == 1" class="label label-danger">Urgent</span>
+                <span ng-show="venture.activityNext.soon" class="label label-warning">{{venture.activityNext.soon}}</span>
+              </div>
             </div>
             <div class="pelf-browse__case-name">
               <h1><a href="{{ venture.manageUrl }}" title="Manage Case">{{ venture.subject }}</a></h1>
