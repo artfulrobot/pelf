@@ -29,6 +29,9 @@ article.pelf-browse__case-item>div {
   flex: 1 0 9.6rem;
   text-align: right;
 }
+.pelf-browse__toggle-urgent {opacity: 0; transition: opacity 0.3s;}
+.pelf-browse__case-meta:hover .pelf-browse__toggle-urgent { opacity: 1; }
+
 .pelf-browse__case-allocations {
   flex: 10 0 19.2rem;
 }

@@ -55,6 +55,26 @@
     $scope.totals = { adjusted: 0, total: 0 };
     $scope.filteredFunds = [];
     $scope.currencySymbol = '';
+    $scope.toggleUrgent = function toggleUrgent(venture) {
+      if (!venture.activityLast) {
+        return false; // weird, they should not have seen this to click on.
+      }
+      const params = {
+        id: venture.activityNext.id,
+        priority_id: (venture.activityNext.urgent == 1) ? 2 : 1,
+      };
+      if (!(params.id > 0)) {
+        console.warn("toggleUrgent failed on ", venture, "with params", params);
+        return false;
+      }
+      // Optimistic change.
+      venture.activityNext.urgent = (venture.activityNext.urgent == 1) ? 0 : 1;
+
+      crmApi('Activity', 'create', params)
+      .then(r => {}, handleFail);
+
+      return false;
+    };
 
     /**
      * Recreates sortedCases and filteredFunds arrays according to the user

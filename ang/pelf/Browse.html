@@ -114,9 +114,10 @@
 
             <div class="pelf-browse__case-meta">
               {{ case_statuses[venture.status_id].label }}
-              <div ng-if="venture.activityNext" >
+              <div ng-if="venture.activityNext.activity_date_time" >
                 <span ng-show="venture.activityNext.urgent == 1" class="label label-danger">Urgent</span>
                 <span ng-show="venture.activityNext.soon" class="label label-warning">{{venture.activityNext.soon}}</span>
+                <a href ng-click="toggleUrgent(venture)" class="pelf-browse__toggle-urgent">{{ (venture.activityNext.urgent == 1) ? 'Set Not Urgent' : 'Set Urgent' }}<a>
               </div>
             </div>
             <div class="pelf-browse__case-name">
