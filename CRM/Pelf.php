@@ -162,8 +162,13 @@ class CRM_Pelf {
   /**
    * Get data for browsing.
    *
+   * @param Array $filters (passed in by api Pelf.getbrowse) Currently only can include
+   * - case_type_id single case type. If not provided, works on all pelf case types
+   *
+   * @param Array $options with keys:
+   * - withActivities: bool
    */
-  public function getBrowseData($filters = []) {
+  public function getBrowseData($filters = [], $options = []) {
 
     $sql = '';
     $params = [];
@@ -172,7 +177,7 @@ class CRM_Pelf {
     $allowed_case_types = array_keys($this->caseTypes);
     if ($filters['case_type_id']) {
       $case_type_id = (int) $filters['case_type_id'];
-      if ($case_type_id > 0) {
+      if ($case_type_id > 0 && in_array($case_type_id, $allowed_case_types)) {
         $allowed_case_types = [$case_type_id];
       }
     }
@@ -230,8 +235,10 @@ class CRM_Pelf {
         $clients[$client['id']] = $client;
       }
 
-      // Fetch last completed activity and first scheduled one.
-      $this->addNearActivities($cases);
+      if ($options['withActivities'] ?? FALSE) {
+        // Fetch last completed activity and first scheduled one.
+        $this->addNearActivities($cases);
+      }
 
       $financial_years = $this->addFundAllocations($cases);
     }

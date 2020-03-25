@@ -237,6 +237,7 @@
       $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
 
       $scope.pageTitle = 'Pelf: All Cases';
+      $scope.exportUrl = CRM.url('civicrm/pelf/export', {caseType: $routeParams.case_type || ''});
       if ($routeParams.case_type) {
         if (r.caseTypes[parseInt($routeParams.case_type)]) {
           $scope.pageTitle = 'Pelf: ' + r.caseTypes[parseInt($routeParams.case_type)].title + ' cases';

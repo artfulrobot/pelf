@@ -27,7 +27,7 @@ function _civicrm_api3_pelf_Getbrowse_spec(&$spec) {
  */
 function civicrm_api3_pelf_Getbrowse($params) {
 
-  $returnValues = pelf()->getBrowseData($params);
+  $returnValues = pelf()->getBrowseData($params, ['withActivities' => TRUE]);
 
 
   return civicrm_api3_create_success($returnValues, $params, 'Pelf', 'Getbrowse');

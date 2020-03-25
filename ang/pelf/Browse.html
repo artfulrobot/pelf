@@ -1,7 +1,8 @@
 <div class="crm-container">
   <h1 crm-page-title>{{ pageTitle }}</h1>
 
-  <a href ng-click="reload()">Reload</a>
+  <a href ng-click="reload()">Reload</a> |
+  <a href="{{ exportUrl }}" >Download CSV</a>
 
   <!-- @todo filters -->
   <div class="messages" ng-if="state == 'loading'" >
