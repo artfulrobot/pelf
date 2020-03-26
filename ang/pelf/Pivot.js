@@ -139,7 +139,7 @@ class GroupedData {
     this.groupDefs = groupDefs;
     this.groupDef = this.groupDefs[this.depth];
     this.groupKey = groupKey;
-    this.parentGroup = parentGroup ?? null;
+    this.parentGroup = parentGroup || null;
     this.childGroups = new ObjectWithOrderedKeys();
     this.rows = [];
   }
@@ -251,12 +251,13 @@ class GroupedData {
         var n = this.groupDefs.length - group.cells.length;
         // We need cells to be padded to the length of the number of group defs
         group.cells.push({formatted: 'Total'}); // @todo use span instead @todo ts()
-        for (var i=n-1;i>0;i--) { group.cells.push({formatted: ''}); }
+        var i;
+        for (i=n-1;i>0;i--) { group.cells.push({formatted: ''}); }
         group.isTotal = true;
         // Create row.
         items.push(this.copyGroup(group));
         // strip out stuff we added.
-        for (var i=n;i>0;i--) { group.cells.pop(); }
+        for (i=n;i>0;i--) { group.cells.pop(); }
         delete group.isTotal;
       }
     }
@@ -386,10 +387,10 @@ class Pivot {
 
   table() {
     var thRows = this.getColHeaders();
-    var html = '<table><thead>'
+    var html = '<table><thead>';
     thRows.forEach(row => {
       html += '<tr>';
-      row.forEach(td => { html += `<td colspan="${td.span}">${td.formatted ?? ''}</th>`; });
+      row.forEach(td => { html += `<td colspan="${td.span}">${td.formatted || ''}</th>`; });
       html += '</tr>';
     });
     html += '</thead><tbody>';
@@ -579,22 +580,28 @@ class Pivot {
         $scope.recalc = function recalc() {
 
           const pivotConfig = {};
+          //
+          // Are we working with the gross or the adjusted?
+          //
           if (this.showAdjusted) {
             pivotConfig.valueAccessor = row => Math.round(parseFloat(row.amount) * $scope.cases[row.case_id].worth_percent / 100);
           }
           else {
             pivotConfig.valueAccessor = row => parseFloat(row.amount);
           }
-          // We need the max value in our data.
-          // var maxValue = this.sourceRows.reduce((a, v) => {console.log("Considering", pivotConfig.valueAccessor(v)); return Math.max(a, pivotConfig.valueAccessor(v));}, 0);
-          var maxValue = 0;
 
+          // Extract the cell value.
+          // We need the max value in our data so we can scale the barcharts
+          var maxValue = 0;
           pivotConfig.valueFormatter = cell => {
-            // Use this loop to determine the max value
+            // We can also use this loop to determine the max value, since it will be run for every cell.
             maxValue = Math.max(maxValue, cell.value);
             return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
           };
 
+          //
+          // 'full' is the Project/Year pivot
+          //
           if ($scope.pivotType === 'full') {
 
             pivotConfig.rowGroupDefs = [
@@ -610,8 +617,10 @@ class Pivot {
             ];
 
           }
+          //
+          // 'project' is the Mini pivots in summary screens. Remove the total columns.
+          //
           if ($scope.pivotType === 'project') {
-            // Mini pivots in summary screens. Remove the total columns.
             pivotConfig.rowGroupDefs = [
               { name: 'Project',
                 accessor: row => $scope.projects[row.project].label,
@@ -623,6 +632,9 @@ class Pivot {
               { name: 'Year', accessor: row => row.fy_start, total: false, formatter: fyFormatter }
             ];
           }
+          //
+          // Pivot by status / year
+          //
           if ($scope.pivotType === 'by_status') {
 
             pivotConfig.rowGroupDefs = [
@@ -650,17 +662,56 @@ class Pivot {
               }
               return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
             };
+          }
+          //
+          // Pivot by phase / year (used on overview)
+          //
+          if ($scope.pivotType === 'by_phase') {
 
+            const phaseMap = {
+              prospect: {label: 'Prospect', groupBy: 'Relevant', weight: 1},
+              live: {label: 'Live', groupBy: 'Relevant', weight: 2},
+              complete: {label: 'Completed', groupBy: 'Relevant', weight: 3},
+              dropped: {label: 'Dropped (by us)', groupBy: 'Irrelevant', weight: 4},
+              failed: {label: 'Failed (rejected)', groupBy:'Irrelevant', weight: 5},
+            };
+            pivotConfig.rowGroupDefs = [
+              { name: 'Relevance',
+                accessor: row => (phaseMap[$scope.caseStatuses[$scope.cases[row.case_id].status_id].phase] || {groupBy: 'Unknown '}).groupBy || 'error',
+                sortAccessor: (group, groupKey) => ({Relevant: 1, Irrelevant: 2}[groupKey]),
+                formatter: th => {
+                  th.cellClasses = 'pelf-financial__no-padding';
+                  return ((th.type === 'total') ? tsTotal : '') + th.groupKey;
+                },
+                total: true,
+              },
+              { name: 'Phase',
+                accessor: row => $scope.caseStatuses[$scope.cases[row.case_id].status_id].phase,
+                // sortAccessor: (group, groupKey) => groupKey,
+                formatter: th => {
+                  th.cellClasses = 'pelf-financial__no-padding';
+                  return ((th.type === 'total') ? tsTotal : '') + (phaseMap[th.groupKey] || {label: 'error: ' + th.groupKey}).label;
+                },
+                total: true,
+              }
+            ];
+            pivotConfig.colGroupDefs = [
+              { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
+            ];
+
+            // Special
+            pivotConfig.valueFormatter = cell => {
+              return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
+            };
           }
 
-
-          console.log("recalc", pivotConfig);
+          // console.log("recalc", pivotConfig);
           var p = new Pivot(pivotConfig);
           p.setSource(this.sourceRows);
           $scope.thRows = p.getColHeaders();
           $scope.tdRows = p.getRows();
           $scope.maxValue = maxValue;
-        }
+        };
         // $scope.recalc();
 
         $scope.$watch('[sourceRows, showAdjusted]', function() { $scope.recalc(); }, true);

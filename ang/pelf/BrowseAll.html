@@ -1,0 +1,89 @@
+<div class="crm-container">
+  <h1 crm-page-title>{{ pageTitle }}</h1>
+
+  <a href ng-click="reload()">Reload</a> |
+  <a href="{{ exportUrl }}" >Download CSV</a>
+
+  <!-- @todo filters -->
+  <div class="messages" ng-if="state == 'loading'" >
+    Please wait...
+  </div>
+  <div ng-if="state == 'loaded'" >
+
+    <!-- ====================================== Form ====================================== -->
+    <form crm-ui-id-scope name="pelf_filters">
+      <div class="pelf-browse__filters">
+
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_phase">Phase</label>
+          <input
+            ng-list
+            crm-ui-id="filters_phase"
+            crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: phaseFilterOptions }"
+            ng-model="filters.phase"
+            name="filters_phase"
+            />
+        </div>
+
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_projects">Projects</label>
+          <input
+            ng-list
+            crm-ui-id="filters_projects"
+            crm-ui-select="{allowClear:true, width: '14rem', multiple: true, data: projectsFilterOptions }"
+            ng-model="filters.projects"
+            name="projects_filter"
+            />
+        </div>
+
+        <div class="pelf-browse__filter">
+          <label crm-ui-for="filters_fys">Years</label>
+          <input
+            ng-list
+            crm-ui-id="filters_fys"
+            crm-ui-select="{allowClear:true, width: '9rem', multiple: true, data: yearsFilterOptions }"
+            ng-model="filters.years"
+            name="projects_fys"
+            />
+        </div>
+
+        <div class="pelf-browse__filter">
+          <input crm-ui-id="filters_adjusted"
+                 type="checkbox"
+                 ng-model="filters.adjusted" />
+          <label crm-ui-for="filters_adjusted">Show adjusted worth</label>
+        </div>
+      </div>
+    </form>
+    <!-- ====================================== Summary ====================================== -->
+
+    <div class="pelf-summary-tables">
+      <div class="pelf-summary-tables__table">
+        <pelf-pivot
+          source-rows="filteredFunds"
+          projects="projects"
+          pivot-type="'full'"
+          cases="cases"
+          show-adjusted="filters.adjusted"
+          table-class="'pelf-financial'"
+          currency-symbol="currencySymbol"
+          ></pelf-pivot>
+      </div>
+      <div class="pelf-summary-tables__table">
+        <!-- by status -->
+
+        <pelf-pivot
+          source-rows="filteredFunds"
+          projects="projects"
+          cases="cases"
+          case-statuses="case_statuses"
+          show-adjusted="filters.adjusted"
+          pivot-type="'by_phase'"
+          table-class="'pelf-financial by-status'"
+          currency-symbol="currencySymbol"
+          ></pelf-pivot>
+      </div>
+    </div>
+  </div>
+
+</div>

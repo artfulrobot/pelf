@@ -48,6 +48,13 @@
     $scope.projectsFilterOptions = {results:[]};
     $scope.yearsFilterOptions = {results:[]};
     $scope.statusFilterOptions = {results:[]};
+    $scope.phaseFilterOptions = {results:[
+      {id: 'prospect', text: 'Prospect'},
+      {id: 'contract', text: 'Contract'},
+      {id: 'complete', text: 'Completed'},
+      {id: 'dropped', text: 'Dropped (by us)'},
+      {id: 'failed', text: 'Failed (rejected)'},
+    ]};
     $scope.projectPivot = [];
     $scope.projects = [];
     $scope.pageTitle = 'Pelf: All Cases';
@@ -284,7 +291,7 @@
         params.case_type_id = $routeParams.case_type;
       }
       crmApi('Pelf', 'getbrowse', params).then(updateData, handleFail);
-    }
+    };
     $scope.reload = reload;
 
     reload();
