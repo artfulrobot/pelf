@@ -605,14 +605,37 @@ class Pivot {
           //
           if ($scope.pivotType === 'full') {
 
-            pivotConfig.rowGroupDefs = [
-              { name: 'Project',
-                accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label.replace(/\s*:.*$/, '') ;},
-                total: true,
-                formatter: projectFormatter,
-              },
-              { name: 'Project detail', accessor: row => $scope.projects[row.project].label.replace(/^.*\s*:/, ''), total: true },
-            ];
+            // Q. do we have any projects with sub projects?
+            console.log("Projects", $scope.projects);
+
+            var useSubprojects = false;
+            for (var k in $scope.projects) {
+              if ($scope.projects.hasOwnProperty(k)) {
+                useSubprojects |= $scope.projects[k].label.indexOf(':') > -1;
+              }
+            }
+
+            if (useSubprojects) {
+
+              pivotConfig.rowGroupDefs = [
+                { name: 'Project',
+                  accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label.replace(/\s*:.*$/, '') ;},
+                  total: true,
+                  formatter: projectFormatter,
+                },
+                { name: 'Project detail', accessor: row => $scope.projects[row.project].label.replace(/^.*\s*:/, ''), total: true },
+              ];
+            }
+            else {
+              pivotConfig.rowGroupDefs = [
+                { name: 'Project',
+                  accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label ;},
+                  total: true,
+                  formatter: projectFormatter,
+                }
+              ];
+            }
+
             pivotConfig.colGroupDefs = [
               { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
             ];
