@@ -3,7 +3,7 @@
   angular.module('pelf').config(function($routeProvider) {
       $routeProvider.when('/pelf/browse', {
         controller: 'PelfBrowse',
-        templateUrl: '~/pelf/Browse.html',
+        templateUrl: '~/pelf/BrowseAll.html',
 
         // If you need to look up data when opening the page, list it out
         // under "resolve".
