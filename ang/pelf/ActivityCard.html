@@ -6,5 +6,10 @@
     <div class="pelf-activity-card__type">{{activity.activity_type || ''}}</div>
   </div>
   <div class="pelf-activity-card__subject">{{activity.subject || ''}}</div>
-  <div class="pelf-activity-card__assignees" ng-if="activity"><i class="crm-i">&#xf2bd;</i> {{activity.assigees || '(unassigned)'}}</div>
+  <div class="pelf-activity-card__footer">
+    <div class="pelf-activity-card__assignees" ng-if="activity"><i class="crm-i">&#xf2bd;</i> {{activity.assigees || '(unassigned)'}}</div>
+    <div class="pelf-activity-card__flags" ng-if="activity">
+      <span ng-show="activity.overdue == 1" class="label label-danger" title="">Overdue</span>
+    </div>
+  </div>
 </div>

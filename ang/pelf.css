@@ -177,6 +177,8 @@ table.pelf-financial div.data {
   display: flex;
   flex-wrap: wrap;
 }
+
+
 .pelf-activity-card__when {
   flex: 1 0 auto;
   padding: 0.4rem 0.8rem;
@@ -189,8 +191,16 @@ table.pelf-financial div.data {
   flex: 1 0 auto;
   padding: 0.4rem 0.8rem;
 }
-.pelf-activity-card__assignees {
+.pelf-activity-card__footer {
   flex: 0 0 auto;
   padding: 0.4rem 0.8rem;
+  display: flex;
+  justify-content: space-between;
+}
+.pelf-activity-card__assignees {
+  flex: 0 1 auto;
+}
+.pelf-activity-card__flags {
+  flex: 0 1 auto;
 }
 /* }}} */

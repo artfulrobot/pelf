@@ -274,6 +274,14 @@ class CRM_Pelf {
     // We assume this:
     $urgent_priority = 1;
 
+    $scheduled_status = \Civi\Api4\OptionValue::get()
+      ->setSelect(['value'])
+      ->addWhere('option_group.name', '=', 'activity_status')
+      ->addWhere('name', '=', 'Scheduled')
+      ->setLimit(1)
+      ->setCheckPermissions(false)
+      ->execute()->first()['value'] ?? 0;
+
     // Do this with SQL to get most of the data, then filter it by running the
     // activities through API4 to apply permissions.
     implode(',', array_map(function ($_) { return (int) $_; }, array_column($cases, 'id')));
@@ -288,7 +296,7 @@ class CRM_Pelf {
     }
     $case_ids = implode(',', $case_ids);
     $sql = "SELECT
-      a.id, a.subject, a.activity_date_time,
+      a.id, a.subject, a.activity_date_time, (a.status_id = $scheduled_status) AS overdue,
       atype.label activity_type,
       ca.case_id,
       (
@@ -318,7 +326,7 @@ class CRM_Pelf {
     }
 
     $sql = "SELECT
-      a.id, a.subject, a.activity_date_time, IF(a.priority_id = $urgent_priority, 1, 0) urgent,
+      a.id, a.subject, a.activity_date_time, IF(a.priority_id = $urgent_priority, 1, 0) urgent, 0 as overdue,
       atype.label activity_type,
       ca.case_id,
       (

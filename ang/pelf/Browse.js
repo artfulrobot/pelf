@@ -152,6 +152,29 @@
           return a.funds_total * a.worth_percent / 100 - b.funds_total * b.worth_percent / 100;
         });
       }
+      else if ($scope.filters.sort == 'Next') {
+        $scope.sortedCases.sort((a, b) => {
+          // First, shift ones with nothing scheduled to the end.
+          var an = a.activityNext, bn = b.activityNext;
+          if (!an && !bn) {
+            return 0;
+          }
+          if (!an && bn) {
+            return 1; // a should go beneith
+          }
+          if (an && !bn) {
+            return -1; // a should go above
+          }
+          // Both have activities, sort by date, descending.
+          if (an.activity_date_time < bn.activity_date_time) {
+            return -1;
+          }
+          if (an.activity_date_time > bn.activity_date_time) {
+            return 1;
+          }
+          return 0;
+        });
+      }
     }
 
     $scope.pelfMoney = function(amount, item) {
@@ -189,6 +212,7 @@
 
         if (venture.activityNext) {
           venture.activityNext.soon = '';
+          venture.dateObject = new Date(venture.activityNext.activity_date_time);
 
           var diff = new Date(venture.activityNext.activity_date_time);
           diff.setHours(0);
@@ -206,7 +230,7 @@
           else if (diff <= 2) {
             venture.activityNext.soon = 'Tomorrow';
           }
-          if (diff < 7) {
+          else if (diff < 7) {
             venture.activityNext.soon = 'In ' + Math.floor(diff) + ' days';
           }
 
