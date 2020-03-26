@@ -137,7 +137,8 @@ table.pelf-financial div.data {
   flex: 1 0 16rem;
   padding: 0 0.8rem;
 }
-.pelf-browse__case-activities>div>div {
+.pelf-browse__case-activities>div>a,
+.pelf-browse__case-activities>div>a>div {
   height: 100%;
 }
 .pelf-browse__details-deselected,
@@ -149,6 +150,15 @@ table.pelf-financial div.data {
 .pelf-browse__details-selected { background-color: #aecde4; }
 .pelf-browse__details-deselected:hover {background-color: #aecde4; }
 
+a.pelf-block-link {
+  text-decoration: none;
+  display: block;
+  color: inherit;
+}
+a.pelf-block-link:hover {
+  text-decoration: none;
+  color: inherit;
+}
 /* The little activity cards. {{{ */
 .pelf-activity-card {
   border-radius: 3px;

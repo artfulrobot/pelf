@@ -62,6 +62,8 @@ class CRM_Pelf {
   /**
    * Access config array.
    *
+   * @see docs/reference/api.md
+   *
    * @param bool $reload
    * @return array
    */
@@ -98,7 +100,8 @@ class CRM_Pelf {
   public function getApiConfig() {
     // Look up case statuses in use.
 
-    // proof of concept: return all case stati @todo
+    // Here we are reutrning all case statuses
+    // @todo is active/ enabled?
     $results = \Civi\Api4\OptionValue::get()
       ->addWhere('option_group.name', '=', 'case_status')
       ->addOrderBy('weight', 'ASC')
@@ -184,11 +187,10 @@ class CRM_Pelf {
 
     // Fetch cases
     $allowed_case_types = implode(',', $allowed_case_types);
-    $sql = "SELECT cs.id, ct.name, cs.subject, v.worth_percent, status_id, stage.label status_label, cs.case_type_id
+    $sql = "SELECT cs.id, ct.name, cs.subject, v.worth_percent, status_id, cs.case_type_id
       FROM civicrm_case cs
       INNER JOIN civicrm_case_type ct ON cs.case_type_id = ct.id
       INNER JOIN civicrm_pelf_venture_details v ON cs.id = v.entity_id
-      INNER JOIN civicrm_option_value stage ON cs.status_id = stage.value AND stage.option_group_id = $this->case_stage_option_group_id
       WHERE case_type_id IN ($allowed_case_types) AND cs.is_deleted = 0";
     $dao = CRM_Core_DAO::executeQuery($sql);
     $cases = [];
@@ -246,12 +248,18 @@ class CRM_Pelf {
     // Fetch all case statuses in use.
     if ($used_case_statuses) {
       $case_statuses = Civi\Api4\OptionValue::get()
-        ->setSelect(['value', 'label', 'color', 'grouping', 'weight'])
+        ->setSelect(['value', 'label', 'name', 'color', 'grouping', 'weight'])
         ->addWhere('option_group.name', '=', 'case_status')
         ->addWhere('value', 'IN', array_keys($used_case_statuses))
         ->addWhere('is_active', '=', '1')
         ->execute()
         ->indexBy('value');
+
+      // Merge in status meta
+      $statusMeta = $this->getConfig()['statusMeta'];
+      foreach ($case_statuses as &$_) {
+        $_['phase'] = $statusMeta[$_['name']]['phase'];
+      }
     }
     else {
       $case_statuses = [];
@@ -511,8 +519,6 @@ class CRM_Pelf {
         }
       }
     }
-
-    // @todo how do we associate the statuses with the case type?
 
   }
   /**

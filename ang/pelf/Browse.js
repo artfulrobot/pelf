@@ -41,6 +41,7 @@
     $scope.filters = {
       sort: 'Status',
       projects: [],
+      phases: [],
       status: [],
       years: [],
       adjusted: true
@@ -50,7 +51,7 @@
     $scope.statusFilterOptions = {results:[]};
     $scope.phaseFilterOptions = {results:[
       {id: 'prospect', text: 'Prospect'},
-      {id: 'contract', text: 'Contract'},
+      {id: 'live', text: 'Live'},
       {id: 'complete', text: 'Completed'},
       {id: 'dropped', text: 'Dropped (by us)'},
       {id: 'failed', text: 'Failed (rejected)'},
@@ -97,7 +98,8 @@
       const needToFilterOnStatus = $scope.filters.status.length > 0;
       const needToFilterOnYears = $scope.filters.years.length > 0;
       const needToFilterOnProjects = $scope.filters.projects.length > 0;
-      const { status: statusValues, years: yearValues, projects: projectValues } = $scope.filters;
+      const needToFilterOnPhases = $scope.filters.phases.length > 0;
+      const { status: statusValues,  phases: phaseValues, years: yearValues, projects: projectValues } = $scope.filters;
 
       for (const key in $scope.cases) {
         if (!$scope.cases.hasOwnProperty(key)) {
@@ -110,6 +112,11 @@
 
         // Status match?
         if (needToFilterOnStatus && statusValues.indexOf(item.status_id.toString()) == -1) {
+          // No.
+          continue;
+        }
+        // Phase match
+        if (needToFilterOnPhases && phaseValues.indexOf($scope.case_statuses[item.status_id].phase) == -1) {
           // No.
           continue;
         }
@@ -196,7 +203,7 @@
         amount *= item.worth_percent / 100;
       }
       return Math.round(amount);
-    };
+    }
 
     // This is called when the data is loaded from CiviCRM.
     function updateData(r) {
@@ -308,11 +315,6 @@
         context: '=',
       },
       link(scope, el) {
-        scope.editActivity = function editActivity(url) {
-          if (url) {
-            window.location = url;
-          }
-        };
         scope.ts = CRM.ts('pelf');
       },
     };

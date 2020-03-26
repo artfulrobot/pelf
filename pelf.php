@@ -167,6 +167,14 @@ function pelf_civicrm_navigationMenu(&$menu) {
     'separator' => 0,
   ));
 
+  _pelf_civix_insert_navigation_menu($menu, 'Cases', array(
+    'label'      => 'Pelf: summary',
+    'name'       => 'pelf_browse_type_all',
+    'url'        => 'civicrm/a#pelf/browse/',
+    'permission' => 'access my cases and activities,access all cases and activities',
+    'operator'   => 'OR',
+    'separator'  => 0,
+  ));
   foreach (pelf()->getCaseTypes() as $id => $_) {
     _pelf_civix_insert_navigation_menu($menu, 'Cases', array(
       'label'      => 'Pelf: ' . $_['title'],

@@ -593,6 +593,7 @@ class Pivot {
           // Extract the cell value.
           // We need the max value in our data so we can scale the barcharts
           var maxValue = 0;
+          // Most pivots share this function, some override it.
           pivotConfig.valueFormatter = cell => {
             // We can also use this loop to determine the max value, since it will be run for every cell.
             maxValue = Math.max(maxValue, cell.value);
@@ -698,11 +699,6 @@ class Pivot {
             pivotConfig.colGroupDefs = [
               { name: 'Year', accessor: row => row.fy_start, total: true, formatter: fyFormatter }
             ];
-
-            // Special
-            pivotConfig.valueFormatter = cell => {
-              return $scope.currencySymbol + Math.round(cell.value).toLocaleString();
-            };
           }
 
           // console.log("recalc", pivotConfig);

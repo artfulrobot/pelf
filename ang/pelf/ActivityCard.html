@@ -1,6 +1,5 @@
-<div class="pelf-activity-card"
-  ng-class="activity ? 'activity' : 'missing'"
-  ng-click="editActivity(activity.url)">
+<a ng-attr-href="{{activity.url}}" class="pelf-block-link"><div class="pelf-activity-card"
+                                                        ng-class="activity ? 'activity' : 'missing'">
   <div class="pelf-activity-card__row">
     <div class="pelf-activity-card__when">{{context}}: {{activity.activity_date_time || ts('(No activity)')}}</div>
     <div class="pelf-activity-card__type">{{activity.activity_type || ''}}</div>
@@ -12,4 +11,4 @@
       <span ng-show="activity.overdue == 1" class="label label-danger" title="">Overdue</span>
     </div>
   </div>
-</div>
+  </div></a>
