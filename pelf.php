@@ -141,16 +141,24 @@ function pelf_civicrm_themes(&$themes) {
   _pelf_civix_civicrm_themes($themes);
 }
 
-// --- Functions below this ship commented out. Uncomment as required. ---
+/**
+ * Implemented hook_civicrm_permission
+ *
+ */
+function pelf_civicrm_permission(&$permissions) {
+  $permissions['administer pelf'] = ts('Administer Pelf');
+}
 
 /**
- * Implements hook_civicrm_preProcess().
- *
- * @link https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_preProcess
- *
-function pelf_civicrm_preProcess($formName, &$form) {
-
-} // */
+ * Implements hook_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions)
+ */
+function pelf_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions) {
+  $permissions['pelf']['getbrowse'] = ['access all cases and activities'];
+  $permissions['pelf']['getconfig'] = ['access all cases and activities'];
+  $permissions['pelf']['getventure'] = ['access all cases and activities'];
+  $permissions['pelf']['createfromtemplate'] = ['administer pelf'];
+  $permissions['pelf']['updateconfig'] = ['administer pelf'];
+}
 
 /**
  * Implements hook_civicrm_navigationMenu().
