@@ -170,7 +170,7 @@ function pelf_civicrm_navigationMenu(&$menu) {
     'label' => E::ts('Setup Pelf'),
     'name' => 'pelf_config',
     'url' => 'civicrm/a#pelf/setup',
-    'permission' => 'administer civicase',
+    'permission' => 'administer pelf',
     'operator' => 'OR',
     'separator' => 0,
   ));
