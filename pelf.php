@@ -153,11 +153,13 @@ function pelf_civicrm_permission(&$permissions) {
  * Implements hook_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions)
  */
 function pelf_civicrm_alterAPIPermissions($entity, $action, &$params, &$permissions) {
+  $permissions['pelf']['createfromtemplate'] = ['administer pelf'];
   $permissions['pelf']['getbrowse'] = ['access all cases and activities'];
   $permissions['pelf']['getconfig'] = ['access all cases and activities'];
   $permissions['pelf']['getventure'] = ['access all cases and activities'];
-  $permissions['pelf']['createfromtemplate'] = ['administer pelf'];
   $permissions['pelf']['updateconfig'] = ['administer pelf'];
+  $permissions['pelf']['updateventure'] = ['access all cases and activities'];
+  // @todo PelfFundsAllocation actions.
 }
 
 /**
