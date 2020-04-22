@@ -34,6 +34,7 @@
     var hs = $scope.hs = crmUiHelp({file: 'CRM/pelf/Browse'}); // See: templates/CRM/pelf/Browse.hlp
 
     $scope.state = 'loading';
+    $scope.initialLoad = true; // Flag so we can set up defaults that depend on some of the data.
     $scope.listDetails = 'activity';
     $scope.sortedCases = [];
     $scope.cases = {};
@@ -161,9 +162,9 @@
           return b.funds_total - a.funds_total;
         });
       }
-      else if ($scope.filters.sort == 'Worth Adjusted') {
+      else if ($scope.filters.sort == 'Adjusted Worth') {
         $scope.sortedCases.sort((a, b) => {
-          return a.funds_total * a.worth_percent / 100 - b.funds_total * b.worth_percent / 100;
+          return b.funds_total * b.worth_percent / 100 - a.funds_total * a.worth_percent / 100;
         });
       }
       else if ($scope.filters.sort == 'Next') {
@@ -191,10 +192,19 @@
       }
     }
 
+    var numberFormatter = Intl.NumberFormat();
     $scope.pelfMoney = function(amount, item) {
       if (!amount) return '';
       amount = adjustAmount(amount, item);
-      amount = $scope.currencySymbol + (Math.round(amount/10) * 10).toString();
+      var unit = '';
+      // I'm not sure about this.
+      // if we do it here we should do it everywhere.
+      if (false && amount >= 1000) {
+        unit = 'k';
+        amount /= 1000;
+      }
+      amount = numberFormatter.format(Math.round(amount));
+      amount = $scope.currencySymbol + amount + unit;
       return amount;
     };
     function adjustAmount(amount, item) {
@@ -268,10 +278,35 @@
       }
 
       $scope.financial_years = r.financial_years;
-      $scope.yearsFilterOptions.results = r.financial_years.map(y => ({id: y, text: y}));
+      $scope.yearsFilterOptions.results = r.financial_years
+        .map(y => ({id: y, text: y}))
+        .sort((a,b) => ( (a.id < b.id) ? 1 : (a.id > b.id) ? -1 : 0 ));
+      if ($scope.initialLoad) {
+        // This is the first time we've had access to the data.
+
+        // Set the default financial year filter to be this year and next.
+        var today = (new Date()).toISOString().substr(0, 10);
+        for (var i = $scope.yearsFilterOptions.results.length - 1; i>0; i--) {
+          var aFy = $scope.yearsFilterOptions.results[i].id;
+          $scope.filters.years.push(aFy);
+          if (aFy > today) break;
+          if ($scope.filters.years.length === 2) {
+            $scope.filters.years.shift();
+          }
+        }
+
+        // Don't always do this.
+        delete $scope.initialLoad;
+      }
 
       $scope.case_statuses = r.case_statuses;
       $scope.sorted_case_statuses= CRM._.sortBy(CRM._.values(r.case_statuses), s => parseInt(s.weight));
+
+      // Each status has:
+      // - value (internal string name)
+      // - label (user facing text)
+      // - whether it's a Opened/Closed (from CiviCase) - inaccessible to us, but that's ok because we have...
+      // - which Pelf 'phase' it belongs to: prospect/live (Opened phases) or completed/failed/dropped (Closed phases)
       $scope.statusFilterOptions.results = Object.keys(r.case_statuses).map(s => ({id: r.case_statuses[s].value, text: r.case_statuses[s].label}));
 
       $scope.pageTitle = 'Pelf: All Cases';
