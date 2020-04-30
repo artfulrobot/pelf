@@ -279,7 +279,13 @@
 
       $scope.financial_years = r.financial_years;
       $scope.yearsFilterOptions.results = r.financial_years
-        .map(y => ({id: y, text: y}))
+        .map(yearStart => {
+          var text = parseInt(yearStart.substr(0, 4));
+          if (yearStart.substr(-5) !== '01-01') {
+            text = `${text}-${text+1}`;
+          }
+          return {id: yearStart, text};
+        })
         .sort((a,b) => ( (a.id < b.id) ? 1 : (a.id > b.id) ? -1 : 0 ));
       if ($scope.initialLoad) {
         // This is the first time we've had access to the data.
