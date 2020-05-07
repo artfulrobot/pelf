@@ -606,7 +606,7 @@ class Pivot {
           if ($scope.pivotType === 'full') {
 
             // Q. do we have any projects with sub projects?
-            console.log("Projects", $scope.projects);
+            // console.log("Projects", $scope.projects);
 
             var useSubprojects = false;
             for (var k in $scope.projects) {
@@ -619,7 +619,7 @@ class Pivot {
 
               pivotConfig.rowGroupDefs = [
                 { name: 'Project',
-                  accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label.replace(/\s*:.*$/, '') ;},
+                  accessor: row => { if (!$scope.projects[row.project] ) { console.warn("oh no: ", row, $scope.projects);  } return $scope.projects[row.project].label.replace(/\s*:.*$/, '') ;},
                   total: true,
                   formatter: projectFormatter,
                 },
@@ -629,7 +629,7 @@ class Pivot {
             else {
               pivotConfig.rowGroupDefs = [
                 { name: 'Project',
-                  accessor: row => { if (!$scope.projects[row.project] ) { console.log("shit: ", row, $scope.projects);  } return $scope.projects[row.project].label ;},
+                  accessor: row => { if (!$scope.projects[row.project] ) { console.warn("oh no: ", row, $scope.projects);  } return $scope.projects[row.project].label ;},
                   total: true,
                   formatter: projectFormatter,
                 }

@@ -22,17 +22,21 @@
 
     <!-- Create an editable list of funds. We do this as a big ugly form because it's just going to be quicker to use like that. -->
     <h2>Edit Funds</h2>
+    <p>Here you can break down the funds by financial year and project. You can enter 0 in the amount if you want to record a project/year for a non-financial venture. To delete a row leave the amount box blank; it will be deleted on Save.</p>
     <table >
       <thead>
         <tr>
           <th>Amount ({{venture.currencySymbol}})</th>
           <th>Financial Year</th>
           <th>Project</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
-        <tr ng-repeat="row in venture.funds" >
-          <td><input ng-model="row.amount" ng-change="recalculateTotals(row)" size="6" /></td>
+        <tr ng-repeat="(i, row) in venture.funds" >
+          <td><input ng-model="row.amount" ng-change="recalculateTotals(row)" size="6" />
+            <span ng-show="row.amount !== '' && (row.amount == '0' || row.amount == 0)">Non-monetary allocation</span>
+          </td>
           <td><select ng-model="row.fy_start" ng-change="recalculateTotals(row)" >
               <option ng-repeat="(v, fy) in venture.fiscalYears" value="{{v}}" >{{fy}}</option>
               </select>
@@ -42,6 +46,10 @@
               <option ng-repeat="project in projects" value="{{project.value}}" >{{project.label}}</option>
             </select>
           </td>
+          <td>
+            <a ng-show="row.amount !== ''" href ng-click="row.amount = '';recalculateTotals(row)" >Delete Row</a>
+            <span ng-show="row.amount === ''" >Row will be deleted when saved because amount is blank</span>
+          </td>
         </tr>
        </tbody>
     </table>
@@ -49,5 +57,6 @@
     &nbsp;
     <button ng-show="dirty" class="crm-button btn-primary" ng-class="{disabled: !dirty}"
       ng-click="saveFunds()" >Save changes</button>
+
   </div>
 </div>

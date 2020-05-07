@@ -33,7 +33,8 @@ function civicrm_api3_pelf_Updateventure($params) {
   $projects = $pelf->getProjects();
   foreach ($params['funds'] as $row) {
     $bao = new CRM_Pelf_BAO_PelfFundsAllocation();
-    $rowShouldNotExist = empty($row['amount']);
+    // We allow zero but disallow empty strings.
+    $rowShouldNotExist = ($row['amount'] ?? '') === '';
 
     if ($row['id']) {
       $bao->id = $row['id'];
