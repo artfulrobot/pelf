@@ -1,22 +1,36 @@
 site_name: Pelf - Pipelines for seeking grants and partnerships
 repo_url: https://github.com/artfulrobot/pelf
-theme: material
+site_description: 'Pelf - pipeline management of funding prospects and contracts'
+site_author: 'Rich Lott / Artful Robot'
+theme:
+  name:
+    material
 
-pages:
+nav:
 - Home: index.md
-- Tutorial: tutorial.md
+- Tutorial: tutorial/index.md
+- How To:
+  - About: howto/index.md
+  - Install: howto/install.md
+- Discussion: discussion/index.md
 - Reference:
-    - 'Configuration': reference/config.md
+    - 'About' : reference/index.md
+    - 'Technical': reference/technical.md
 
 markdown_extensions:
   - attr_list
   - admonition
   - def_list
-  - codehilite
-  - toc(permalink=true)
+  - pymdownx.highlight:
+      guess_lang: False
+  - toc:
+      permalink: True
   - pymdownx.superfences
   - pymdownx.inlinehilite
   - pymdownx.tilde
   - pymdownx.betterem
   - pymdownx.mark
 
+plugins:
+  - search:
+      lang: en
