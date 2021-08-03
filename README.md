@@ -1,44 +1,16 @@
-# pelf
+# Pelf: pipleline management for funding prospects and contracts
 
-![Screenshot](/images/screenshot.png)
+**A CiviCRM extension to help you manage different funding pipelines, e.g.
+grant applications, partnerships, consultancy, that builds on CiviCase.**
 
-(*FIXME: In one or two paragraphs, describe what the extension does and why one would download it. *)
+Please see documentation pages for details.
 
 The extension is licensed under [AGPL-3.0](LICENSE.txt).
 
 ## Requirements
 
-* PHP v7.0+
-* CiviCRM (*FIXME: Version number*)
+* PHP v7.3+
+* CiviCRM 5.36+
+* CiviCase
 
-## Installation (Web UI)
 
-This extension has not yet been published for installation via the web UI.
-
-## Installation (CLI, Zip)
-
-Sysadmins and developers may download the `.zip` file for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-cd <extension-dir>
-cv dl pelf@https://github.com/FIXME/pelf/archive/master.zip
-```
-
-## Installation (CLI, Git)
-
-Sysadmins and developers may clone the [Git](https://en.wikipedia.org/wiki/Git) repo for this extension and
-install it with the command-line tool [cv](https://github.com/civicrm/cv).
-
-```bash
-git clone https://github.com/FIXME/pelf.git
-cv en pelf
-```
-
-## Usage
-
-(* FIXME: Where would a new user navigate to get started? What changes would they see? *)
-
-## Known Issues
-
-(* FIXME *)
