@@ -10,7 +10,7 @@ class CRM_Pelf {
   protected static $instance;
 
   /**
-   * @var array of case types that we are configured to work with. Populated in getConfig()
+   * @var array of case types that we are configured to work with. Populated in getConfig(), keyed by type id.
    */
   protected $caseTypes;
 
@@ -77,14 +77,16 @@ class CRM_Pelf {
         ];
       }
 
-      // Make a lookup of case type name to id.
+      // Make a lookup of case types we handle.
       $this->caseTypes = [];
       if ($this->config['caseTypes']) {
         foreach (civicrm_api3('CaseType', 'get',
           [
             'return'  => ['id', 'name', 'title'],
             'options' => ['limit' => 0],
-            'name'    => ['IN' => $this->config['caseTypes']]])['values'] ?? [] as $_) {
+            'name'    => ['IN' => $this->config['caseTypes']]
+          ])['values'] ?? [] as $_) {
+
             $this->caseTypes[(int) $_['id']] = $_;
         }
       }
