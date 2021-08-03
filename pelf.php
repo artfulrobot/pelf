@@ -198,6 +198,62 @@ function pelf_civicrm_navigationMenu(&$menu) {
   _pelf_civix_navigationMenu($menu);
 }
 
+/**
+ * Implements hook_civicrm_pre
+ * https://docs.civicrm.org/dev/en/latest/hooks/hook_civicrm_pre/
+ */
+function pelf_civicrm_pre($op, $objectName, $id, &$params) {
+  if ($objectName === 'Case' && $op === 'edit') {
+    // Editing a case.
+
+    if (empty($params['case_status_id'])) {
+      // Not setting case status.
+      return;
+    }
+
+    // 1. is it one of our types?
+    $case = civicrm_api3('Case', 'get', [
+      'id' => $id,
+      'case_type_id' => ['IN' => array_keys(pelf()->getCaseTypes())],
+      'return' => ['status_id', 'case_type_id', pelf()->worthPercentApiName],
+    ])['values'][$id] ?? NULL;
+    if (!$case) {
+      // Not a Pelf case.
+      return;
+    }
+
+    // 2. are they changing the status
+    if ($case['case_status_id'] == $params['case_status_id']) {
+      // Unchanged
+      return;
+    }
+
+
+    // Get the status name from the id.
+    $newStatusName = \Civi\Api4\OptionValue::get()
+      ->addWhere('option_group.name', '=', 'case_status')
+      ->addWhere('value', '=', $params['case_status_id'])
+      ->setSelect(['name'])
+      ->setCheckPermissions(FALSE)
+      ->execute()->first()['name'] ?? NULL;
+
+    if (!$newStatusName) {
+      return;
+    }
+
+    $conf = pelf()->getConfig();
+    if (($conf['statusMeta'][$newStatusName]['phase'] ?? NULL) === 'live') {
+      // Moving to contract, we should change the worth to 100.
+      // Unfortunately this does not allow us to make a note of this.
+      // Probably if I do it via API it would work, but need to make sure
+      // don't get in a loop!
+      // xxx @todo
+      $x=1;
+    }
+
+
+  }
+}
 
 /**
  * Syntatic sugar.
