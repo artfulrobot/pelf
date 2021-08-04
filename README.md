@@ -3,14 +3,7 @@
 **A CiviCRM extension to help you manage different funding pipelines, e.g.
 grant applications, partnerships, consultancy, that builds on CiviCase.**
 
-Please see documentation pages for details.
+## REPOSITORY MOVED
 
-The extension is licensed under [AGPL-3.0](LICENSE.txt).
-
-## Requirements
-
-* PHP v7.3+
-* CiviCRM 5.36+
-* CiviCase
-
+<https://lab.civicrm.org/extensions/pelf>
 
